@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:petani_maju/screen/homescreen.dart';
+import 'page/login_page.dart';
 
 void main() {
   runApp(const MainApp());
@@ -10,6 +10,9 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: Homescreen());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: const LoginPage(),
+    );
   }
 }
