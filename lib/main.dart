@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:petani_maju/widget/navbar.dart';
+import 'package:petani_maju/screen/homescreen.dart';
 
 void main() {
-  runApp(const MyApp());
+  // Tidak perlu async atau WidgetsFlutterBinding jika tidak ada inisialisasi berat di awal
+  runApp(const MainApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PetaniMaju',
+      title: 'Petani Maju',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
+        primarySwatch: Colors.green,
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         useMaterial3: true,
       ),
-      home: const Navbar(),
+      home: HomeScreen(),
     );
   }
 }
