@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
-import 'page/login_page.dart';
+import 'package:petani_maju/widget/navbar.dart';
 
 void main() {
-  runApp(const MainApp());
+  runApp(const MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'PetaniMaju',
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
+        useMaterial3: true,
+      ),
+      home: const Navbar(),
     );
   }
 }
