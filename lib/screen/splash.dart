@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:petani_maju/screen/homescreen.dart';
+import 'package:petani_maju/screen/onboarding_screen.dart'; // Ganti import HomeScreen dengan OnboardingScreen
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,8 +40,9 @@ class _SplashScreenState extends State<SplashScreen>
       Navigator.of(context).pushReplacement(
         // Custom Route untuk Transisi yang Halus (Fade Transition)
         PageRouteBuilder(
+          // UBAH DISINI: Arahkan ke OnboardingScreen, bukan HomeScreen
           pageBuilder: (context, animation, secondaryAnimation) =>
-              const HomeScreen(),
+              const OnboardingScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = 0.0;
             const end = 1.0;
