@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:petani_maju/screen/homescreen.dart';
+import 'package:petani_maju/screen/splash.dart';
 
 void main() {
   // Tidak perlu async atau WidgetsFlutterBinding jika tidak ada inisialisasi berat di awal
@@ -19,7 +19,7 @@ class MainApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         useMaterial3: true,
       ),
-      home: HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }
