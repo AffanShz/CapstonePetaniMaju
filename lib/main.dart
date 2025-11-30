@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:petani_maju/features/home/screens/home_screen.dart';
 
 void main() {
-  // Tidak perlu async atau WidgetsFlutterBinding jika tidak ada inisialisasi berat di awal
   runApp(const MainApp());
 }
 
