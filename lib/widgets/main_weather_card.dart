@@ -3,8 +3,9 @@ import 'package:petani_maju/utils/weather_utils.dart';
 
 class MainWeatherCard extends StatelessWidget {
   final Map<String, dynamic>? weatherData;
+  final VoidCallback? onRefresh;
 
-  const MainWeatherCard({super.key, this.weatherData});
+  const MainWeatherCard({super.key, this.weatherData, this.onRefresh});
 
   String getIconUrl(String iconCode) {
     return 'https://openweathermap.org/img/wn/$iconCode@2x.png';
@@ -32,6 +33,7 @@ class MainWeatherCard extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
@@ -69,6 +71,11 @@ class MainWeatherCard extends StatelessWidget {
               const SizedBox(width: 16),
               Image.network(getIconUrl(weather['icon']),
                   width: 100, fit: BoxFit.cover),
+              if (onRefresh != null)
+                IconButton(
+                  onPressed: onRefresh,
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                ),
             ],
           ),
         ],

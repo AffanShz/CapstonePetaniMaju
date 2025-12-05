@@ -15,8 +15,9 @@ class WeatherUtils {
       return 'Berawan';
     }
     if (description.contains('clear')) return 'Cerah';
-    if (description.contains('mist') || description.contains('fog'))
+    if (description.contains('mist') || description.contains('fog')) {
       return 'Berkabut';
+    }
 
     // Default fallback: capitalize first letter
     return description.split(' ').map((word) {

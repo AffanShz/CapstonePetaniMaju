@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:geolocator/geolocator.dart';
+
 import 'package:petani_maju/data/datasources/weather_service.dart';
 import 'package:petani_maju/utils/weather_utils.dart';
 import 'package:petani_maju/features/home/widgets/forecast_list.dart';
@@ -31,14 +33,68 @@ class _HomeState extends State<HomeScreen> {
   void initState() {
     super.initState();
     initializeDateFormatting('id_ID', null).then((_) {
-      _fetchData();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkLocationPermissionAndFetch();
+      });
     });
   }
 
-  Future<void> _fetchData() async {
+  Future<void> _checkLocationPermissionAndFetch() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled don't continue
+      // accessing the position and request users of the
+      // App to enable the location services.
+      _fetchData();
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try
+        // requesting permissions again (this is also where
+        // Android's shouldShowRequestPermissionRationale
+        // returned true. According to Android guidelines
+        // your App should show an explanatory UI now.
+        _fetchData();
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      _fetchData();
+      return;
+    }
+
+    // When we reach here, permissions are granted and we can
+    // continue accessing the position of the device.
     try {
-      final current = await _weatherService.fetchCurrentWeather();
-      final forecast = await _weatherService.fetchForecast();
+      Position position = await Geolocator.getCurrentPosition(
+          locationSettings:
+              const LocationSettings(accuracy: LocationAccuracy.high));
+      _fetchData(lat: position.latitude, lon: position.longitude);
+    } catch (e) {
+      // Fallback if location fails
+      _fetchData();
+    }
+  }
+
+  Future<void> _fetchData({double? lat, double? lon}) async {
+    try {
+      final current =
+          await _weatherService.fetchCurrentWeather(lat: lat, lon: lon);
+      final forecast = await _weatherService.fetchForecast(lat: lat, lon: lon);
 
       List<dynamic> rawList = forecast['list'];
       String? foundRainAlert;
@@ -90,7 +146,10 @@ class _HomeState extends State<HomeScreen> {
                         children: [
                           CustomAppBar(),
                           SizedBox(height: 20),
-                          MainWeatherCard(weatherData: currentWeather),
+                          MainWeatherCard(
+                            weatherData: currentWeather,
+                            onRefresh: _checkLocationPermissionAndFetch,
+                          ),
                           SizedBox(height: 20),
                           if (isRainPredicted) ...[
                             WeatherAlert(message: rainAlertMessage!),
