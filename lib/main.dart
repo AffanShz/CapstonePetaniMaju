@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:petani_maju/features/home/screens/home_screen.dart';
+import 'package:petani_maju/data/datasources/cache_service.dart';
+import 'package:petani_maju/widgets/navbaar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive for local caching
+  await CacheService.init();
 
   await Supabase.initialize(
     url: 'https://hlfkxflasywitfwbkrxu.supabase.co',
@@ -27,7 +31,7 @@ class MainApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const MainScreen(),
     );
   }
 }

@@ -3,9 +3,15 @@ import 'package:petani_maju/utils/weather_utils.dart';
 
 class MainWeatherCard extends StatelessWidget {
   final Map<String, dynamic>? weatherData;
+  final String? detailedLocation;
   final VoidCallback? onRefresh;
 
-  const MainWeatherCard({super.key, this.weatherData, this.onRefresh});
+  const MainWeatherCard({
+    super.key,
+    this.weatherData,
+    this.detailedLocation,
+    this.onRefresh,
+  });
 
   String getIconUrl(String iconCode) {
     return 'https://openweathermap.org/img/wn/$iconCode@2x.png';
@@ -16,6 +22,11 @@ class MainWeatherCard extends StatelessWidget {
     if (weatherData == null) return const SizedBox();
     var main = weatherData!['main'];
     var weather = weatherData!['weather'][0];
+
+    // Use detailed location if available, otherwise fall back to API name
+    String locationText = detailedLocation?.isNotEmpty == true
+        ? detailedLocation!
+        : weatherData!['name'] ?? '-';
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -40,14 +51,20 @@ class MainWeatherCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(Icons.location_on,
                             color: Colors.white70, size: 16),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            weatherData!['name'] ?? '-',
-                            style: const TextStyle(color: Colors.white),
+                            locationText,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              height: 1.3,
+                            ),
+                            maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -68,14 +85,18 @@ class MainWeatherCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
-              Image.network(getIconUrl(weather['icon']),
-                  width: 100, fit: BoxFit.cover),
-              if (onRefresh != null)
-                IconButton(
-                  onPressed: onRefresh,
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                ),
+              const SizedBox(width: 8),
+              Column(
+                children: [
+                  Image.network(getIconUrl(weather['icon']),
+                      width: 80, fit: BoxFit.cover),
+                  if (onRefresh != null)
+                    IconButton(
+                      onPressed: onRefresh,
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                    ),
+                ],
+              ),
             ],
           ),
         ],
