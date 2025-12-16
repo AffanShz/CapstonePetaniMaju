@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:petani_maju/features/home/screens/home_screen.dart';
 import 'package:petani_maju/features/calendar/screens/calendar_screen.dart';
 import 'package:petani_maju/features/tips/screens/tips_screen.dart';
-// import 'package:petani_maju/features/settings/screens/settings_screen.dart'; // Placeholder if needed
+import 'package:petani_maju/features/settings/screens/settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const CalendarScreen(),
     const TipsScreen(),
-    const Center(child: Text('Pengaturan')), // Placeholder for Settings
+    const SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
