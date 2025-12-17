@@ -76,9 +76,11 @@ class _HomeState extends State<HomeScreen> {
 
   Future<void> _checkLocationPermissionAndFetch() async {
     if (currentWeather == null) {
-      setState(() {
-        isLoading = true;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = true;
+        });
+      }
     }
 
     bool serviceEnabled;
@@ -144,26 +146,32 @@ class _HomeState extends State<HomeScreen> {
       // Check for rain alert
       _checkRainAlert(rawList);
 
-      setState(() {
-        currentWeather = current;
-        forecastList = rawList;
-        detailedLocation =
-            locationStr ?? _cacheService.getCachedDetailedLocation();
-        isLoading = false;
-        errorMessage = "";
-      });
+      if (mounted) {
+        setState(() {
+          currentWeather = current;
+          forecastList = rawList;
+          detailedLocation =
+              locationStr ?? _cacheService.getCachedDetailedLocation();
+          isLoading = false;
+          errorMessage = "";
+        });
+      }
     } catch (e) {
       // Only show error if we don't have cached data
       if (currentWeather == null) {
-        setState(() {
-          errorMessage = "Gagal memuat data: $e";
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            errorMessage = "Gagal memuat data: $e";
+            isLoading = false;
+          });
+        }
       } else {
         // We have cached data, just continue showing it
-        setState(() {
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
       }
     }
   }
@@ -188,10 +196,12 @@ class _HomeState extends State<HomeScreen> {
       }
     }
 
-    setState(() {
-      rainAlertMessage = foundRainAlert;
-      isRainPredicted = foundRainAlert != null;
-    });
+    if (mounted) {
+      setState(() {
+        rainAlertMessage = foundRainAlert;
+        isRainPredicted = foundRainAlert != null;
+      });
+    }
   }
 
   @override

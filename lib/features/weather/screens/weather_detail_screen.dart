@@ -48,21 +48,25 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
     final cachedLocation = _cacheService.getCachedDetailedLocation();
 
     if (cachedWeather != null) {
-      setState(() {
-        currentWeather = cachedWeather;
-        forecastList = cachedForecast ?? [];
-        detailedLocation = cachedLocation;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          currentWeather = cachedWeather;
+          forecastList = cachedForecast ?? [];
+          detailedLocation = cachedLocation;
+          isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _fetchWeatherData() async {
     if (currentWeather == null) {
-      setState(() {
-        isLoading = true;
-        errorMessage = "";
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = true;
+          errorMessage = "";
+        });
+      }
     }
 
     try {
@@ -116,24 +120,30 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
         forecastList: forecast['list'] ?? [],
       );
 
-      setState(() {
-        currentWeather = current;
-        forecastList = forecast['list'] ?? [];
-        detailedLocation =
-            locationStr ?? _cacheService.getCachedDetailedLocation();
-        isLoading = false;
-        errorMessage = "";
-      });
+      if (mounted) {
+        setState(() {
+          currentWeather = current;
+          forecastList = forecast['list'] ?? [];
+          detailedLocation =
+              locationStr ?? _cacheService.getCachedDetailedLocation();
+          isLoading = false;
+          errorMessage = "";
+        });
+      }
     } catch (e) {
       if (currentWeather == null) {
-        setState(() {
-          errorMessage = "Gagal memuat data cuaca: $e";
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            errorMessage = "Gagal memuat data cuaca: $e";
+            isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
       }
     }
   }

@@ -29,10 +29,12 @@ class _TipsScreenState extends State<TipsScreen> {
     // 1. Load from cache first
     final cachedTips = _cacheService.getCachedTips();
     if (cachedTips != null && cachedTips.isNotEmpty) {
-      setState(() {
-        _allTips = cachedTips;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _allTips = cachedTips;
+          _isLoading = false;
+        });
+      }
     }
 
     // 2. Fetch from API
@@ -42,21 +44,27 @@ class _TipsScreenState extends State<TipsScreen> {
       // Save to cache
       await _cacheService.saveTipsData(freshTips);
 
-      setState(() {
-        _allTips = freshTips;
-        _isLoading = false;
-        _error = null;
-      });
+      if (mounted) {
+        setState(() {
+          _allTips = freshTips;
+          _isLoading = false;
+          _error = null;
+        });
+      }
     } catch (e) {
       if (_allTips.isEmpty) {
-        setState(() {
-          _error = "Gagal memuat tips: $e";
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = "Gagal memuat tips: $e";
+            _isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
