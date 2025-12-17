@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:petani_maju/data/datasources/cache_service.dart';
 import 'package:petani_maju/widgets/navbaar.dart';
@@ -7,15 +8,17 @@ import 'package:petani_maju/core/constants/services/notification_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   // Initialize Hive for local caching
   await CacheService.init();
 
   await NotificationService.init();
 
   await Supabase.initialize(
-    url: 'https://hlfkxflasywitfwbkrxu.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsZmt4Zmxhc3l3aXRmd2Jrcnh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM3MDkyODksImV4cCI6MjA3OTI4NTI4OX0._gM2FcSnP_sAzOhd_2HDLo_zwIc1Y0KclZaNBkEDIy4',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   runApp(const MainApp());
