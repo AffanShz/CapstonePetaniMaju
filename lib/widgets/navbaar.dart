@@ -53,7 +53,7 @@ class _MainScreenState extends State<MainScreen> {
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),
-            label: 'Pengaturan', // User requested "Pengaturan" text
+            label: 'Pengaturan',
           ),
         ],
       ),

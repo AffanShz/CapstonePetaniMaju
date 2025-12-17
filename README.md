@@ -2,6 +2,15 @@
 
 Aplikasi mobile untuk membantu petani Indonesia dengan informasi cuaca, tips pertanian, dan kalender tanam.
 
+## 📚 Dokumentasi
+
+| Dokumen | Deskripsi |
+|---------|-----------|
+| [📖 DOCS.md](./DOCS.md) | Dokumentasi teknis lengkap |
+| [🔌 API.md](./API.md) | Dokumentasi API dan endpoints |
+| [🤝 CONTRIBUTING.md](./CONTRIBUTING.md) | Panduan kontribusi |
+| [📋 CHANGELOG.md](./CHANGELOG.md) | Log perubahan versi |
+
 ## 📱 Fitur Utama
 
 ### 🌤️ Cuaca
