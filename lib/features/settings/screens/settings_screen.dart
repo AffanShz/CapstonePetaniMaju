@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:petani_maju/core/constants/colors.dart';
+import 'package:petani_maju/core/services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -108,7 +109,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () {},
                 ),
               ]),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+
+              // Test Notification Button
+              _buildTestNotificationButton(),
+              const SizedBox(height: 16),
 
               // Logout Button
               _buildLogoutButton(),
@@ -333,6 +338,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTestNotificationButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () async {
+          // Request permission first
+          await NotificationService.requestPermissions();
+
+          // Show immediate notification
+          await NotificationService.showNotification(
+            id: 999,
+            title: 'Test Notifikasi Berhasil!',
+            body: 'Jika Anda melihat ini, notifikasi berfungsi dengan baik.',
+          );
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Notifikasi test dikirim!'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        },
+        icon: const Icon(Icons.notifications_active),
+        label: const Text(
+          'Test Notifikasi',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryGreen,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
     );
   }

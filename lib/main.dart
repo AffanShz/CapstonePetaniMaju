@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:petani_maju/data/datasources/cache_service.dart';
+import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/widgets/navbaar.dart';
-import 'package:petani_maju/core/constants/services/notification_service.dart';
+import 'package:petani_maju/core/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

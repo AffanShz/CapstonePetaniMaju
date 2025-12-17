@@ -5,7 +5,7 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:petani_maju/data/datasources/weather_service.dart';
 import 'package:petani_maju/data/datasources/location_service.dart';
-import 'package:petani_maju/data/datasources/cache_service.dart';
+import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/utils/weather_utils.dart';
 import 'package:petani_maju/features/home/widgets/forecast_list.dart';
 import 'package:petani_maju/features/home/widgets/quick_access.dart';
@@ -16,7 +16,7 @@ import 'package:petani_maju/widgets/main_weather_card.dart';
 import 'package:petani_maju/widgets/section_header.dart';
 import 'package:petani_maju/features/weather/screens/weather_detail_screen.dart';
 // Import Service Notifikasi
-import 'package:petani_maju/core/constants/services/notification_service.dart';
+import 'package:petani_maju/core/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -204,9 +204,7 @@ class _HomeState extends State<HomeScreen> {
         // Deteksi hujan dalam 24 jam ke depan
         if (foundRainAlert == null &&
             date.isBefore(DateTime.now().add(const Duration(hours: 24))) &&
-            (weatherMain == 'Rain' ||
-                weatherMain == 'Thunderstorm' ||
-                weatherMain == 'Drizzle')) {
+            (weatherMain == 'Rain' || weatherMain == 'Thunderstorm')) {
           String timeStr = DateFormat('HH:mm').format(date);
           String translatedDesc = WeatherUtils.translateWeather(description);
           foundRainAlert =
