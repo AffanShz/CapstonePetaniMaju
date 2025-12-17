@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:petani_maju/data/datasources/cache_service.dart';
 import 'package:petani_maju/widgets/navbaar.dart';
+import 'package:petani_maju/core/constants/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Hive for local caching
   await CacheService.init();
+
+  await NotificationService.init();
 
   await Supabase.initialize(
     url: 'https://hlfkxflasywitfwbkrxu.supabase.co',
