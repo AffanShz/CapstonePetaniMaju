@@ -28,10 +28,12 @@ class _TipsListState extends State<TipsList> {
     // 1. Load from cache first
     final cachedTips = _cacheService.getCachedTips();
     if (cachedTips != null && cachedTips.isNotEmpty) {
-      setState(() {
-        _tips = cachedTips;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _tips = cachedTips;
+          _isLoading = false;
+        });
+      }
     }
 
     // 2. Fetch from API
@@ -41,22 +43,28 @@ class _TipsListState extends State<TipsList> {
       // Save to cache
       await _cacheService.saveTipsData(freshTips);
 
-      setState(() {
-        _tips = freshTips;
-        _isLoading = false;
-        _error = null;
-      });
+      if (mounted) {
+        setState(() {
+          _tips = freshTips;
+          _isLoading = false;
+          _error = null;
+        });
+      }
     } catch (e) {
       // Only show error if we don't have cached data
       if (_tips.isEmpty) {
-        setState(() {
-          _error = "Gagal memuat tips: $e";
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = "Gagal memuat tips: $e";
+            _isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
