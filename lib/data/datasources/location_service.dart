@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LocationService {
-  // Using OpenStreetMap Nominatim for reverse geocoding (free, no API key)
   Future<Map<String, String>> getDetailedLocation(
       double lat, double lon) async {
     try {

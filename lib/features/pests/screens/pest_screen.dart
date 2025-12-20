@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:petani_maju/data/datasources/pest_services.dart';
 import 'package:petani_maju/features/pests/screens/pest_detail_screen.dart';
 
-class PestScreen extends StatelessWidget {
+class PestScreen extends StatefulWidget {
   const PestScreen({super.key});
+
+  @override
+  State<PestScreen> createState() => _PestScreenState();
+}
+
+class _PestScreenState extends State<PestScreen> {
+  final PestService _pestService = PestService();
+  String _selectedCategory = 'Semua';
+  String _searchQuery = '';
+
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +38,14 @@ class PestScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
+                // Search Bar
                 TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                   decoration: InputDecoration(
                     hintText: 'Cari hama atau penyakit...',
                     prefixIcon: const Icon(Icons.search),
@@ -35,32 +60,60 @@ class PestScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // Filter Chips
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildChip('Semua', true),
-                      _buildChip('Hama Padi', false),
-                      _buildChip('Hama Jagung', false),
+                      _buildChip('Semua'),
+                      _buildChip('Hama Padi'),
+                      _buildChip('Hama Jagung'),
+                      _buildChip('Hama Umum'),
                     ],
                   ),
                 ),
               ],
             ),
           ),
+
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildPestCard(context, 'Wereng Coklat', 'Hama Padi',
-                    'assets/images/wereng.jpg'),
-                _buildPestCard(context, 'Ulat Grayak', 'Hama Jagung',
-                    'assets/images/ulat.jpg'),
-                _buildPestCard(context, 'Tikus Sawah', 'Hama Padi',
-                    'assets/images/tikus.jpg'),
-                _buildPestCard(context, 'Belalang Kembara', 'Hama Umum',
-                    'assets/images/belalang.jpg'),
-              ],
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _pestService.fetchPests(query: _searchQuery),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('Data tidak ditemukan'));
+                }
+
+                final pests = snapshot.data!.where((pest) {
+                  if (_selectedCategory == 'Semua') return true;
+                  return pest['kategori'] == _selectedCategory;
+                }).toList();
+
+                if (pests.isEmpty) {
+                  return const Center(
+                      child: Text('Tidak ada hama di kategori ini'));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: pests.length,
+                  itemBuilder: (context, index) {
+                    final pest = pests[index];
+                    return _buildPestCard(
+                      context,
+                      pest['nama'] ?? 'Tanpa Nama',
+                      pest['kategori'] ?? 'Umum',
+                      pest['gambar_url'] ?? '',
+                      pest, 
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -68,24 +121,38 @@ class PestScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(String label, bool isSelected) {
+  Widget _buildChip(String label) {
+    final isSelected = _selectedCategory == label;
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
-      child: Chip(
+      child: ChoiceChip(
         label: Text(
           label,
           style: TextStyle(color: isSelected ? Colors.white : Colors.black),
         ),
-        backgroundColor: isSelected ? Colors.green : Colors.white,
+        selected: isSelected,
+        selectedColor: Colors.green,
+        backgroundColor: Colors.white,
         side: BorderSide(color: Colors.grey.shade300),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        onSelected: (selected) {
+          if (selected) {
+            setState(() {
+              _selectedCategory = label;
+            });
+          }
+        },
       ),
     );
   }
 
-  Widget _buildPestCard(
-      BuildContext context, String title, String subtitle, String imagePath) {
+  Widget _buildPestCard(BuildContext context, String title, String subtitle,
+      String imageUrl, Map<String, dynamic> pestData) {
     return Card(
+      color: Colors.white,
+      surfaceTintColor: Colors
+          .white,
+
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
@@ -97,8 +164,15 @@ class PestScreen extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             color: Colors.grey.shade300,
-            image: DecorationImage(
-                image: AssetImage(imagePath), fit: BoxFit.cover),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: imageUrl.startsWith('http')
+                ? Image.network(imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.broken_image))
+                : const Icon(Icons.image, color: Colors.grey),
           ),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -107,7 +181,8 @@ class PestScreen extends StatelessWidget {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const PestDetailScreen()),
+            MaterialPageRoute(
+                builder: (context) => PestDetailScreen(pest: pestData)),
           );
         },
       ),
