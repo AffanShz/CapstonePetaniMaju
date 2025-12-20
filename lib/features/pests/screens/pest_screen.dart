@@ -16,10 +16,48 @@ class _PestScreenState extends State<PestScreen> {
 
   final TextEditingController _searchController = TextEditingController();
 
+  // State untuk data
+  List<Map<String, dynamic>> _pests = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPests();
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadPests() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final pests = await _pestService.fetchPests(query: _searchQuery);
+      setState(() {
+        _pests = pests;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredPests {
+    if (_selectedCategory == 'Semua') return _pests;
+    return _pests
+        .where((pest) => pest['kategori'] == _selectedCategory)
+        .toList();
   }
 
   @override
@@ -44,6 +82,12 @@ class _PestScreenState extends State<PestScreen> {
                   onChanged: (value) {
                     setState(() {
                       _searchQuery = value;
+                    });
+                    // Debounce search
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                      if (_searchQuery == value) {
+                        _loadPests();
+                      }
                     });
                   },
                   decoration: InputDecoration(
@@ -76,47 +120,85 @@ class _PestScreenState extends State<PestScreen> {
               ],
             ),
           ),
-
           Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _pestService.fetchPests(query: _searchQuery),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('Data tidak ditemukan'));
-                }
-
-                final pests = snapshot.data!.where((pest) {
-                  if (_selectedCategory == 'Semua') return true;
-                  return pest['kategori'] == _selectedCategory;
-                }).toList();
-
-                if (pests.isEmpty) {
-                  return const Center(
-                      child: Text('Tidak ada hama di kategori ini'));
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: pests.length,
-                  itemBuilder: (context, index) {
-                    final pest = pests[index];
-                    return _buildPestCard(
-                      context,
-                      pest['nama'] ?? 'Tanpa Nama',
-                      pest['kategori'] ?? 'Umum',
-                      pest['gambar_url'] ?? '',
-                      pest, 
-                    );
-                  },
-                );
-              },
-            ),
+            child: _buildContent(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return _buildErrorWidget();
+    }
+
+    if (_pests.isEmpty) {
+      return const Center(child: Text('Data tidak ditemukan'));
+    }
+
+    final filteredPests = _filteredPests;
+
+    if (filteredPests.isEmpty) {
+      return const Center(child: Text('Tidak ada hama di kategori ini'));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadPests,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: filteredPests.length,
+        itemBuilder: (context, index) {
+          final pest = filteredPests[index];
+          return _buildPestCard(
+            context,
+            pest['nama'] ?? 'Tanpa Nama',
+            pest['kategori'] ?? 'Umum',
+            pest['gambar_url'] ?? '',
+            pest,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+            const SizedBox(height: 16),
+            const Text(
+              'Gagal memuat data hama',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Pastikan koneksi internet Anda aktif dan coba lagi.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadPests,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -150,9 +232,7 @@ class _PestScreenState extends State<PestScreen> {
       String imageUrl, Map<String, dynamic> pestData) {
     return Card(
       color: Colors.white,
-      surfaceTintColor: Colors
-          .white,
-
+      surfaceTintColor: Colors.white,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,

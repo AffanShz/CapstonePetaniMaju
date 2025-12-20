@@ -38,6 +38,10 @@ class _HomeState extends State<HomeScreen> {
   bool isRainPredicted = false;
   String? detailedLocation;
 
+  // Sync status
+  DateTime? lastSyncTime;
+  bool isOnline = true;
+
   // Flag untuk mencegah notifikasi muncul berulang kali saat refresh
   bool _hasShownNotification = false;
 
@@ -65,6 +69,7 @@ class _HomeState extends State<HomeScreen> {
       final cachedWeather = _cacheService.getCachedCurrentWeather();
       final cachedForecast = _cacheService.getCachedForecast();
       final cachedLocation = _cacheService.getCachedDetailedLocation();
+      final cacheTime = _cacheService.getWeatherCacheTime();
 
       if (cachedWeather != null) {
         if (mounted) {
@@ -72,6 +77,7 @@ class _HomeState extends State<HomeScreen> {
             currentWeather = cachedWeather;
             forecastList = cachedForecast ?? [];
             detailedLocation = cachedLocation;
+            lastSyncTime = cacheTime;
             isLoading = false;
 
             // Cek hujan dari data cache (Notifikasi bisa muncul instan dari sini)
@@ -164,6 +170,8 @@ class _HomeState extends State<HomeScreen> {
           forecastList = rawList;
           detailedLocation =
               locationStr ?? _cacheService.getCachedDetailedLocation();
+          lastSyncTime = DateTime.now();
+          isOnline = true;
           isLoading = false;
           errorMessage = "";
         });
@@ -175,9 +183,13 @@ class _HomeState extends State<HomeScreen> {
         setState(() {
           errorMessage = "Gagal memuat data. Periksa koneksi internet.";
           isLoading = false;
+          isOnline = false;
         });
       } else if (mounted) {
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+          isOnline = false;
+        });
       }
     }
   }
@@ -270,7 +282,10 @@ class _HomeState extends State<HomeScreen> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         child: Column(
                           children: [
-                            const CustomAppBar(),
+                            CustomAppBar(
+                              lastSyncTime: lastSyncTime,
+                              isOnline: isOnline,
+                            ),
                             const SizedBox(height: 20),
                             GestureDetector(
                               onTap: () {

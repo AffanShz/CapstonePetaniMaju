@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 class PestDetailScreen extends StatelessWidget {
-  // 1. Terima data pest dari halaman sebelumnya
+  // Terima data pest dari halaman sebelumnya
   final Map<String, dynamic> pest;
 
   const PestDetailScreen({super.key, required this.pest});
@@ -11,13 +11,14 @@ class PestDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Ambil data dengan fallback value jika null
+    // Schema Supabase: id, created_at, nama, kategori, gambar_url, deskripsi, ciri_ciri, dampak, cara_mengatasi
     final String title = pest['nama'] ?? 'Detail Hama';
     final String category = pest['kategori'] ?? 'Umum';
     final String imageUrl = pest['gambar_url'] ?? '';
-    final String characteristics = pest['ciri_ciri'] ??
-        pest['deskripsi'] ??
-        'Belum ada informasi ciri-ciri.';
-    // Kita asumsikan data dampak dipisahkan baris baru (\n) di database
+    final String? deskripsi = pest['deskripsi'];
+    final String characteristics =
+        pest['ciri_ciri'] ?? 'Belum ada informasi ciri-ciri.';
+    // Data dampak dipisahkan baris baru (\n) di database
     final String rawDampak = pest['dampak'] ?? 'Belum ada informasi dampak.';
     final List<String> impactList = rawDampak.split('\n');
     final String solution =
@@ -70,7 +71,13 @@ class PestDetailScreen extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+
+                      // Bagian Deskripsi (jika ada)
+                      if (deskripsi != null && deskripsi.isNotEmpty) ...[
+                        _buildInfoSection('Deskripsi', deskripsi),
+                        const SizedBox(height: 16),
+                      ],
 
                       // Bagian Ciri-ciri
                       _buildInfoSection('Ciri-ciri', characteristics),
