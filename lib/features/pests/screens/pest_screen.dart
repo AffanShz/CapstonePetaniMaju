@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:petani_maju/data/datasources/pest_services.dart';
 import 'package:petani_maju/features/pests/screens/pest_detail_screen.dart';
 
@@ -248,10 +249,19 @@ class _PestScreenState extends State<PestScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: imageUrl.startsWith('http')
-                ? Image.network(imageUrl,
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.broken_image))
+                    placeholder: (context, url) => const Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.broken_image),
+                  )
                 : const Icon(Icons.image, color: Colors.grey),
           ),
         ),

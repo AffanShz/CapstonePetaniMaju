@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class TipsDetailScreen extends StatelessWidget {
   final Map<String, dynamic> tipData;
@@ -26,11 +27,15 @@ class TipsDetailScreen extends StatelessWidget {
               width: double.infinity,
               color: Colors.grey.shade300,
               child: imageUrl.isNotEmpty
-                  ? Image.network(
-                      imageUrl,
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Center(
+                      width: double.infinity,
+                      height: 250,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) => const Center(
                         child: Icon(Icons.image, size: 48, color: Colors.grey),
                       ),
                     )

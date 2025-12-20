@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:petani_maju/data/datasources/tips_services.dart';
 import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/features/tips/screens/tips_detail_screen.dart';
@@ -255,12 +256,18 @@ class _TipsScreenState extends State<TipsScreen> {
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(12)),
                   child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Center(
+                          placeholder: (context, url) => const Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => const Center(
                             child: Icon(Icons.image, color: Colors.grey),
                           ),
                         )

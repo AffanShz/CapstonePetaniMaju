@@ -1,6 +1,7 @@
 // lib/features/pests/screens/pest_detail_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PestDetailScreen extends StatelessWidget {
   // Terima data pest dari halaman sebelumnya
@@ -37,17 +38,23 @@ class PestDetailScreen extends StatelessWidget {
               children: [
                 // Gambar Dinamis
                 Container(
-                  height: 250,
+                  height: 300,
                   width: double.infinity,
                   color: Colors.grey[300],
                   child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, stack) => const Center(
-                              child: Icon(Icons.broken_image, size: 50)),
+                          width: double.infinity,
+                          height: 300,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          errorWidget: (context, url, error) => const Center(
+                            child: Icon(Icons.broken_image, size: 70),
+                          ),
                         )
-                      : const Center(child: Icon(Icons.image, size: 50)),
+                      : const Center(child: Icon(Icons.image, size: 70)),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
