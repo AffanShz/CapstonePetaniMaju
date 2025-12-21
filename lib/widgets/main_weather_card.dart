@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:petani_maju/utils/weather_utils.dart';
 
 class MainWeatherCard extends StatelessWidget {
@@ -88,8 +89,21 @@ class MainWeatherCard extends StatelessWidget {
               const SizedBox(width: 8),
               Column(
                 children: [
-                  Image.network(getIconUrl(weather['icon']),
-                      width: 80, fit: BoxFit.cover),
+                  CachedNetworkImage(
+                    imageUrl: getIconUrl(weather['icon']),
+                    width: 80,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: Icon(Icons.cloud, color: Colors.white70, size: 48),
+                    ),
+                    errorWidget: (context, url, error) => const SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: Icon(Icons.cloud, color: Colors.white70, size: 48),
+                    ),
+                  ),
                   if (onRefresh != null)
                     IconButton(
                       onPressed: onRefresh,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:geolocator/geolocator.dart';
@@ -38,7 +39,18 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
     // 1. Load from cache first
     _loadFromCache();
 
-    // 2. Fetch fresh data
+    // 2. Check if offline mode is enabled
+    final offlineMode = _cacheService.getOfflineMode();
+    if (offlineMode) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+      return;
+    }
+
+    // 3. Fetch fresh data (online mode)
     await _fetchWeatherData();
   }
 
@@ -88,8 +100,9 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
             permission == LocationPermission.always) {
           try {
             Position position = await Geolocator.getCurrentPosition(
-                locationSettings:
-                    const LocationSettings(accuracy: LocationAccuracy.high));
+                locationSettings: const LocationSettings(
+                    accuracy: LocationAccuracy.low,
+                    timeLimit: Duration(seconds: 5)));
             lat = position.latitude;
             lon = position.longitude;
           } catch (e) {
@@ -461,7 +474,19 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
             ),
           ),
           icon != null
-              ? Image.network(getIconUrl(icon), width: 40, height: 40)
+              ? CachedNetworkImage(
+                  imageUrl: getIconUrl(icon),
+                  width: 40,
+                  height: 40,
+                  placeholder: (context, url) => Icon(
+                      _getWeatherIcon(weatherMain),
+                      color: Colors.orange,
+                      size: 32),
+                  errorWidget: (context, url, error) => Icon(
+                      _getWeatherIcon(weatherMain),
+                      color: Colors.orange,
+                      size: 32),
+                )
               : Icon(_getWeatherIcon(weatherMain),
                   color: Colors.orange, size: 32),
           const SizedBox(width: 16),
