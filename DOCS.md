@@ -112,9 +112,13 @@ await CacheService.init();
 | `isWeatherCacheStale()` | `bool` | Cek apakah cache sudah kadaluarsa |
 | `saveTipsData()` | `Future<void>` | Simpan data tips ke cache |
 | `getCachedTips()` | `List<Map<String, dynamic>>?` | Ambil data tips cached |
+| `savePestsData()` | `Future<void>` | Simpan data hama ke cache |
+| `getCachedPests()` | `List<Map<String, dynamic>>?` | Ambil data hama cached |
 | `saveLocationData()` | `Future<void>` | Simpan data lokasi ke cache |
 | `getCachedDetailedLocation()` | `String?` | Ambil lokasi detail cached |
 | `getCachedCoordinates()` | `Map<String, double>?` | Ambil koordinat cached |
+| `setOfflineMode()` | `Future<void>` | Set status offline mode |
+| `getOfflineMode()` | `bool` | Ambil status offline mode |
 | `clearAllCache()` | `Future<void>` | Hapus semua data cache |
 
 #### Contoh Penggunaan
@@ -195,6 +199,21 @@ Service untuk mengambil data tips dari Supabase.
 | Method | Return Type | Deskripsi |
 |--------|-------------|-----------|
 | `fetchTips()` | `Future<List<Map<String, dynamic>>>` | Ambil semua tips dari database |
+
+> **Note**: Semua API service memiliki timeout 10 detik untuk mencegah app freeze saat offline.
+
+---
+
+### PestService (`pest_services.dart`)
+
+Service untuk mengambil data hama dari Supabase.
+
+#### Methods
+
+| Method | Return Type | Deskripsi |
+|--------|-------------|-----------|
+| `fetchPests({String? query})` | `Future<List<Map<String, dynamic>>>` | Ambil semua hama dari database |
+| `fetchPestById(int id)` | `Future<Map<String, dynamic>?>` | Ambil hama berdasarkan ID |
 
 ---
 
@@ -337,14 +356,34 @@ Screen dibuka
 ```
 User tekan tombol Refresh
     │
-    ├── Ambil koordinat GPS saat ini
+    ├── Cek Offline Mode?
+    │       └── Ya → Skip fetch, tampilkan cache
+    │
+    ├── Ambil koordinat GPS saat ini (timeout 5 detik)
     │       └── Gagal? → Gunakan koordinat cached
     │
-    ├── Fetch data cuaca baru dari API
+    ├── Fetch data cuaca baru dari API (timeout 10 detik)
     │       ├── Berhasil? → Update cache + Update UI
     │       └── Gagal? → Tampilkan error message
     │
     └── UI ter-update
+```
+
+### Offline Mode Flow
+
+```
+App Start tanpa Internet
+    │
+    ├── Supabase.initialize() timeout (10 detik)
+    │       └── TimeoutException → Set appStartedOffline = true
+    │
+    ├── Auto-enable Offline Mode
+    │       └── CacheService.setOfflineMode(true)
+    │
+    ├── Show Offline Notification Snackbar
+    │
+    └── Load semua data dari cache
+            └── Skip semua API fetch
 ```
 
 ---
@@ -406,7 +445,19 @@ Permissions yang dibutuhkan (`ios/Runner/Info.plist`):
 - Gunakan cache-first approach untuk mengurangi API calls
 - Set cache expiration yang reasonable (default: 30 menit untuk cuaca)
 - Lazy load data yang tidak diperlukan segera
+- Gunakan `WidgetsBinding.instance.addPostFrameCallback` untuk deferred init
+
+### Timeout Configuration
+- Semua API requests harus memiliki timeout
+- Gunakan timeout 10 detik untuk API calls
+- Gunakan timeout 5 detik untuk Geolocator
+- Wrap Supabase.initialize() dengan timeout
+
+### Image Loading
+- Gunakan `CachedNetworkImage` daripada `Image.network`
+- Selalu sediakan `placeholder` dan `errorWidget`
+- Fallback ke icon jika gambar gagal dimuat
 
 ---
 
-*Dokumentasi ini terakhir diperbarui: Desember 2024*
+*Dokumentasi ini terakhir diperbarui: 21 Desember 2024*
