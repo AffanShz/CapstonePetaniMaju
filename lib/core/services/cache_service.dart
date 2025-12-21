@@ -11,6 +11,7 @@ class CacheService {
   static const String _weatherBoxName = 'weatherCache';
   static const String _tipsBoxName = 'tipsCache';
   static const String _locationBoxName = 'locationCache';
+  static const String _settingsBoxName = 'settingsCache';
 
   /// Initialize Hive and open all boxes
   /// Call this in main() before runApp()
@@ -19,6 +20,7 @@ class CacheService {
     await Hive.openBox(_weatherBoxName);
     await Hive.openBox(_tipsBoxName);
     await Hive.openBox(_locationBoxName);
+    await Hive.openBox(_settingsBoxName);
   }
 
   // ==================== WEATHER CACHE ====================
@@ -126,6 +128,24 @@ class CacheService {
     return null;
   }
 
+  // ==================== PESTS CACHE ====================
+
+  /// Save pests list to cache (uses tipsBox for simplicity)
+  Future<void> savePestsData(List<Map<String, dynamic>> pests) async {
+    await _tipsBox.put('pests', pests);
+    await _tipsBox.put('pestsLastUpdated', DateTime.now().toIso8601String());
+  }
+
+  /// Get cached pests list
+  List<Map<String, dynamic>>? getCachedPests() {
+    final data = _tipsBox.get('pests');
+    if (data != null) {
+      return List<Map<String, dynamic>>.from(
+          (data as List).map((item) => Map<String, dynamic>.from(item)));
+    }
+    return null;
+  }
+
   // ==================== UTILITY ====================
 
   /// Clear all cached data
@@ -133,5 +153,19 @@ class CacheService {
     await _weatherBox.clear();
     await _tipsBox.clear();
     await _locationBox.clear();
+  }
+
+  // ==================== SETTINGS ====================
+
+  Box get _settingsBox => Hive.box(_settingsBoxName);
+
+  /// Set offline mode preference
+  Future<void> setOfflineMode(bool value) async {
+    await _settingsBox.put('offlineMode', value);
+  }
+
+  /// Get offline mode preference (default: false = online)
+  bool getOfflineMode() {
+    return _settingsBox.get('offlineMode', defaultValue: false) as bool;
   }
 }

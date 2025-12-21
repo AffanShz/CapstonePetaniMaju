@@ -21,7 +21,10 @@ class _TipsListState extends State<TipsList> {
   @override
   void initState() {
     super.initState();
-    _loadTips();
+    // Defer to after first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadTips();
+    });
   }
 
   Future<void> _loadTips() async {
@@ -34,7 +37,18 @@ class _TipsListState extends State<TipsList> {
       });
     }
 
-    // 2. Fetch from API
+    // 2. Check if offline mode is enabled
+    final offlineMode = _cacheService.getOfflineMode();
+    if (offlineMode) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    // 3. Fetch from API (online mode)
     try {
       final freshTips = await _tipsService.fetchTips();
 
