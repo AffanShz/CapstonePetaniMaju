@@ -1,6 +1,10 @@
+// lib/features/calendar/screens/calendar_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Import untuk format tanggal
-import 'package:petani_maju/core/services/notification_service.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
+import 'package:petani_maju/data/datasources/planting_schedule_service.dart';
+import 'package:petani_maju/core/services/notification_service.dart'; // Import Notifikasi
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -10,371 +14,334 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  // State untuk tanggal yang sedang dilihat (Bulan/Tahun di header)
-  DateTime _focusedDate = DateTime.now();
+  // Service Supabase
+  final PlantingScheduleService _scheduleService = PlantingScheduleService();
 
-  // State untuk tanggal yang dipilih user (Default: hari ini)
-  DateTime _selectedDate = DateTime.now();
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
 
-  // Data rekomendasi tanam (Contoh: Key string "yyyy-MM-dd")
-  final Map<String, String> _rekomendasiTanam = {
-    '2025-11-05': 'Jagung',
-    '2025-11-12': 'Padi',
-    '2025-11-25': 'Cabai',
-    // Tambahkan data dinamis di sini nantinya
-  };
+  // Data Event dari Supabase
+  Map<DateTime, List<dynamic>> _events = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = _focusedDay;
+    _loadSchedules(); // Ambil data dari Supabase saat buka layar
+  }
+
+  // --- LOGIKA SUPABASE ---
+
+  Future<void> _loadSchedules() async {
+    try {
+      final data = await _scheduleService.fetchSchedules();
+      final newEvents = <DateTime, List<dynamic>>{};
+
+      for (var item in data) {
+        final date = DateTime.parse(item['tanggal_tanam']);
+        // Normalisasi tanggal (hilangkan jam/menit)
+        final dateKey = DateTime(date.year, date.month, date.day);
+
+        if (newEvents[dateKey] == null) {
+          newEvents[dateKey] = [];
+        }
+        newEvents[dateKey]!.add(item);
+      }
+
+      if (mounted) {
+        setState(() {
+          _events = newEvents;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data: $e')),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  List<dynamic> _getEventsForDay(DateTime day) {
+    return _events[DateTime(day.year, day.month, day.day)] ?? [];
+  }
+
+  // --- UI ---
 
   @override
   Widget build(BuildContext context) {
-    // Menghitung jumlah hari dalam bulan yang sedang dilihat
-    final int daysInMonth =
-        DateTime(_focusedDate.year, _focusedDate.month + 1, 0).day;
-
-    // Menghitung hari pertama bulan ini jatuh pada hari apa (1=Senin, ... 7=Minggu)
-    // Kita asumsikan Grid dimulai dari Senin. Offset menyesuaikan posisi tanggal 1.
-    final int firstDayWeekday =
-        DateTime(_focusedDate.year, _focusedDate.month, 1).weekday;
-    final int offset = firstDayWeekday - 1; // Offset kotak kosong di awal bulan
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kalender Tanam'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle, color: Colors.green, size: 32),
-            onPressed: () => _showAddScheduleDialog(context),
+      ),
+
+      // Tombol Tambah dengan Dialog
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddScheduleDialog,
+        backgroundColor: Colors.green,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+
+      body: Column(
+        children: [
+          // 1. WIDGET KALENDER (Table Calendar)
+          TableCalendar(
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _focusedDay,
+            calendarFormat: _calendarFormat,
+            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+
+            // Menampilkan titik marker jika ada event
+            eventLoader: _getEventsForDay,
+
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+            },
+            onFormatChanged: (format) {
+              if (_calendarFormat != format) {
+                setState(() => _calendarFormat = format);
+              }
+            },
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+
+            // Styling Kalender
+            calendarStyle: const CalendarStyle(
+              todayDecoration: BoxDecoration(
+                color: Colors.greenAccent,
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+              ),
+              markerDecoration: BoxDecoration(
+                color: Colors.orange, // Warna titik event
+                shape: BoxShape.circle,
+              ),
+            ),
+            headerStyle: const HeaderStyle(
+              formatButtonVisible: false,
+              titleCentered: true,
+            ),
+          ),
+
+          const SizedBox(height: 16.0),
+
+          // 2. LIST KEGIATAN DI BAWAH
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              color: Colors.grey[50],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    child: Text(
+                      'Kegiatan: ${DateFormat('dd MMM yyyy').format(_selectedDay!)}',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _getEventsForDay(_selectedDay!).isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.event_note,
+                                        size: 50, color: Colors.grey[300]),
+                                    const SizedBox(height: 8),
+                                    const Text('Tidak ada jadwal tanam.',
+                                        style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount:
+                                    _getEventsForDay(_selectedDay!).length,
+                                itemBuilder: (context, index) {
+                                  final event =
+                                      _getEventsForDay(_selectedDay!)[index];
+                                  return Card(
+                                    elevation: 2,
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    child: ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: Colors.green[100],
+                                        child: const Icon(Icons.grass,
+                                            color: Colors.green),
+                                      ),
+                                      title: Text(event['nama_tanaman'],
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      subtitle: Text(
+                                          event['catatan'] ?? 'Tanpa catatan'),
+                                      trailing: IconButton(
+                                        icon: const Icon(Icons.delete_outline,
+                                            color: Colors.red),
+                                        onPressed: () =>
+                                            _confirmDelete(event['id']),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // --- HEADER BULAN & TAHUN ---
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: _previousMonth,
-                  ),
-                  Text(
-                    DateFormat('MMMM yyyy')
-                        .format(_focusedDate), // Format Real-time
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: _nextMonth,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              // --- LABEL HARI (Sen, Sel, Rab...) ---
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
-                    .map((day) => Expanded(
-                          child: Center(
-                            child: Text(day,
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[600])),
-                          ),
-                        ))
-                    .toList(),
-              ),
-              const SizedBox(height: 10),
-
-              // --- LEGENDA ---
-              Row(
-                children: [
-                  _buildLegendMarker(Colors.blue, 'Rekomendasi'),
-                  const SizedBox(width: 16),
-                  _buildLegendMarker(Colors.green, 'Terpilih'),
-                  const SizedBox(width: 16),
-                  _buildLegendMarker(
-                      Colors.orange.withOpacity(0.5), 'Hari Ini'),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // --- GRID KALENDER ---
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  childAspectRatio: 0.9,
-                ),
-                // Total item = hari dalam bulan + kotak kosong di awal (offset)
-                itemCount: daysInMonth + offset,
-                itemBuilder: (context, index) {
-                  // Jika index kurang dari offset, render kotak kosong
-                  if (index < offset) {
-                    return Container();
-                  }
-
-                  // Menghitung tanggal asli berdasarkan index
-                  final int day = index - offset + 1;
-                  final DateTime currentDate =
-                      DateTime(_focusedDate.year, _focusedDate.month, day);
-
-                  // Key string untuk cek rekomendasi
-                  final String dateKey =
-                      DateFormat('yyyy-MM-dd').format(currentDate);
-
-                  // Logika Cek Status Tanggal
-                  final bool isToday = _isSameDay(currentDate, DateTime.now());
-                  final bool isSelected =
-                      _isSameDay(currentDate, _selectedDate);
-                  final bool hasRecommendation =
-                      _rekomendasiTanam.containsKey(dateKey);
-
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedDate = currentDate;
-                      });
-                      if (hasRecommendation) {
-                        _showRecommendationInfo(
-                            day, _rekomendasiTanam[dateKey]!);
-                      }
-                    },
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              // Warna Background
-                              color: isSelected
-                                  ? Colors.green
-                                  : (isToday
-                                      ? Colors.orange.withOpacity(0.3)
-                                      : Colors.transparent),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isToday
-                                    ? Colors.orange
-                                    : Colors.grey.shade300,
-                                width: isToday ? 2 : 1,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '$day',
-                                style: TextStyle(
-                                  color:
-                                      isSelected ? Colors.white : Colors.black,
-                                  fontWeight: (isToday || isSelected)
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          // Dot Marker jika ada rekomendasi
-                          if (hasRecommendation)
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
-                              ),
-                            )
-                          else
-                            const SizedBox(height: 6),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 24),
-              // Menampilkan tanggal yang dipilih di bagian bawah
-              Text(
-                'Kegiatan Tanggal ${DateFormat('dd MMMM yyyy').format(_selectedDate)}',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-
-              // Contoh Card Kegiatan (Bisa dibuat dinamis nanti)
-              _buildActivityCard(
-                title: 'Pemupukan Tahap 2',
-                subtitle: 'Lahan A - Padi varietas IR64',
-                time: '08:00',
-                color: Colors.green,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
-  // --- LOGIKA NAVIGASI BULAN ---
-  void _previousMonth() {
-    setState(() {
-      _focusedDate = DateTime(_focusedDate.year, _focusedDate.month - 1);
-    });
-  }
+  // --- DIALOG & ACTIONS ---
 
-  void _nextMonth() {
-    setState(() {
-      _focusedDate = DateTime(_focusedDate.year, _focusedDate.month + 1);
-    });
-  }
-
-  // Helper membandingkan dua tanggal (abaikan jam/menit)
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  // Widget Legenda
-  Widget _buildLegendMarker(Color color, String text) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
-    );
-  }
-
-  // Dialog Tambah Jadwal
-  void _showAddScheduleDialog(BuildContext context) {
-    // Controller untuk input
-    final titleController = TextEditingController();
-
+  void _confirmDelete(int id) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Tambah Jadwal Tanam'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(hintText: 'Nama Kegiatan'),
-            ),
-            const SizedBox(height: 12),
-            const TextField(
-                decoration: InputDecoration(hintText: 'Waktu (contoh: 08:00)')),
-            const SizedBox(height: 10),
-            Text('Tanggal: ${DateFormat('dd MMM yyyy').format(_selectedDate)}',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Jadwal?'),
+        content: const Text('Data yang dihapus tidak dapat dikembalikan.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
-              // Menjadwalkan notifikasi menggunakan tanggal yang dipilih (_selectedDate)
-              // Logika jam bisa diambil dari text field waktu, disini kita hardcode +5 detik untuk demo
-
-              NotificationService.scheduleNotification(
-                id: DateTime.now().millisecond,
-                title: 'Pengingat Petani Maju',
-                body: 'Kegiatan: ${titleController.text} besok!',
-                // Contoh: Notifikasi H-1 atau sesuai waktu input
-                scheduledDate: DateTime.now().add(const Duration(seconds: 5)),
-              );
-
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Jadwal disimpan & Pengingat aktif!')),
-              );
+            onPressed: () async {
+              Navigator.pop(ctx);
+              // Hapus dari Supabase
+              await _scheduleService.deleteSchedule(id);
+              // Refresh tampilan
+              _loadSchedules();
             },
-            child: const Text('Simpan'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  // Sheet Info Rekomendasi
-  void _showRecommendationInfo(int day, String tanaman) {
-    showModalBottomSheet(
+  void _showAddScheduleDialog() {
+    final TextEditingController nameController = TextEditingController();
+    final TextEditingController noteController = TextEditingController();
+    final TextEditingController timeController =
+        TextEditingController(); // Controller Waktu
+
+    showDialog(
       context: context,
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          width: double.infinity,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Rekomendasi Tanggal $day',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 10),
-              Text('Waktu tepat menanam: $tanaman',
-                  style: const TextStyle(fontSize: 16, color: Colors.green)),
-              const SizedBox(height: 20),
-            ],
+        return AlertDialog(
+          title: const Text('Tambah Jadwal Tanam'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Nama Kegiatan / Tanaman',
+                    hintText: 'Contoh: Pupuk Padi',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: noteController,
+                  decoration: InputDecoration(
+                    labelText: 'Catatan',
+                    hintText: 'Contoh: Gunakan NPK',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: timeController,
+                  decoration: InputDecoration(
+                    labelText: 'Waktu (Opsional)',
+                    hintText: '08:00',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    suffixIcon: const Icon(Icons.access_time),
+                  ),
+                  keyboardType: TextInputType.datetime,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today,
+                        size: 16, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                        'Tanggal: ${DateFormat('dd MMM yyyy').format(_selectedDay!)}'),
+                  ],
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameController.text.isNotEmpty) {
+                  // 1. Simpan ke Supabase
+                  await _scheduleService.addSchedule(
+                    namaTanaman: nameController.text,
+                    tanggalTanam: _selectedDay!,
+                    catatan: noteController.text,
+                  );
+
+                  // 2. Jadwalkan Notifikasi (Fitur dari kode Anda sebelumnya)
+                  NotificationService.scheduleNotification(
+                    id: DateTime.now().millisecond,
+                    title: 'Pengingat Petani Maju',
+                    body: 'Kegiatan: ${nameController.text} hari ini!',
+                    // Demo: 5 detik dari sekarang, realitanya bisa diset H-1
+                    scheduledDate:
+                        DateTime.now().add(const Duration(seconds: 5)),
+                  );
+
+                  if (mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Jadwal disimpan & Pengingat aktif!')),
+                    );
+                    _loadSchedules(); // Refresh kalender
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child:
+                  const Text('Simpan', style: TextStyle(color: Colors.white)),
+            ),
+          ],
         );
       },
-    );
-  }
-
-  Widget _buildActivityCard({
-    required String title,
-    required String subtitle,
-    required String time,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border(left: BorderSide(color: color, width: 4)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-            ],
-          ),
-          Text(time,
-              style: TextStyle(
-                  color: Colors.grey[600], fontWeight: FontWeight.w500)),
-        ],
-      ),
     );
   }
 }
