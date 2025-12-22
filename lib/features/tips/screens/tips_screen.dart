@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:petani_maju/data/datasources/tips_services.dart';
-import 'package:petani_maju/data/datasources/cache_service.dart';
+import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/features/tips/screens/tips_detail_screen.dart';
 
 class TipsScreen extends StatefulWidget {

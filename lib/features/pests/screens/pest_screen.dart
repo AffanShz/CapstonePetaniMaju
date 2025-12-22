@@ -9,8 +9,10 @@ class PestScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Info Hama & Penyakit'),
-        leading:
-            IconButton(icon: const Icon(Icons.arrow_back), onPressed: () {}),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Column(
         children: [

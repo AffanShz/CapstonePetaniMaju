@@ -5,7 +5,7 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:petani_maju/data/datasources/weather_service.dart';
 import 'package:petani_maju/data/datasources/location_service.dart';
-import 'package:petani_maju/data/datasources/cache_service.dart';
+import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/utils/weather_utils.dart';
 
 class WeatherDetailScreen extends StatefulWidget {
