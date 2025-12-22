@@ -21,7 +21,7 @@ API untuk mendapatkan data cuaca real-time dan forecast.
 | Property | Value |
 |----------|-------|
 | Base URL | `https://api.openweathermap.org/data/2.5` |
-| API Key | `51a0edeeaa973f9fccfe1049ae9fc1f2` |
+| API Key | `51...........................` |
 | Default Coordinates | Lat: `-6.5716`, Lon: `107.7587` |
 | Units | `metric` (Celsius) |
 | Language | `id` (Indonesia) |
