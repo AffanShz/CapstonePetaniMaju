@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:petani_maju/data/datasources/pest_services.dart';
+import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/features/pests/screens/pest_detail_screen.dart';
 
 class PestScreen extends StatefulWidget {
@@ -12,6 +13,7 @@ class PestScreen extends StatefulWidget {
 
 class _PestScreenState extends State<PestScreen> {
   final PestService _pestService = PestService();
+  final CacheService _cacheService = CacheService();
   String _selectedCategory = 'Semua';
   String _searchQuery = '';
 
@@ -25,7 +27,10 @@ class _PestScreenState extends State<PestScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPests();
+    // Defer to after first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadPests();
+    });
   }
 
   @override
@@ -40,17 +45,47 @@ class _PestScreenState extends State<PestScreen> {
       _errorMessage = null;
     });
 
+    // 1. Load from cache first
+    final cachedPests = _cacheService.getCachedPests();
+    if (cachedPests != null && cachedPests.isNotEmpty) {
+      setState(() {
+        _pests = cachedPests;
+        _isLoading = false;
+      });
+    }
+
+    // 2. Check if offline mode is enabled
+    final offlineMode = _cacheService.getOfflineMode();
+    if (offlineMode) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // 3. Fetch from Supabase (online mode)
     try {
       final pests = await _pestService.fetchPests(query: _searchQuery);
+
+      // Save to cache
+      await _cacheService.savePestsData(pests);
+
       setState(() {
         _pests = pests;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      // Only show error if we don't have cached data
+      if (_pests.isEmpty) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

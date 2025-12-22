@@ -48,18 +48,37 @@ class _HomeState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting('id_ID', null).then((_) {
+    // Defer ALL initialization to after first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        // Minta izin notifikasi segera setelah aplikasi dibuka
-        NotificationService.requestPermissions();
-        _loadData();
+        initializeDateFormatting('id_ID', null).then((_) {
+          if (mounted) {
+            NotificationService.requestPermissions();
+            _loadData();
+          }
+        });
       }
     });
   }
 
   Future<void> _loadData() async {
+    // Check if offline mode is enabled
+    final offlineMode = _cacheService.getOfflineMode();
+
     // Load data cache dulu agar tampilan tidak kosong
     _loadFromCache();
+
+    // Jika offline mode aktif, hanya gunakan cache
+    if (offlineMode) {
+      if (mounted) {
+        setState(() {
+          isOnline = false;
+          isLoading = false;
+        });
+      }
+      return;
+    }
+
     // Kemudian ambil data baru dari internet
     await _checkLocationPermissionAndFetch();
   }
@@ -91,6 +110,18 @@ class _HomeState extends State<HomeScreen> {
   }
 
   Future<void> _checkLocationPermissionAndFetch() async {
+    // Skip if offline mode is enabled
+    final offlineMode = _cacheService.getOfflineMode();
+    if (offlineMode) {
+      if (mounted) {
+        setState(() {
+          isOnline = false;
+          isLoading = false;
+        });
+      }
+      return;
+    }
+
     // Tampilkan loading hanya jika benar-benar tidak ada data (cache kosong)
     if (currentWeather == null && mounted) {
       setState(() => isLoading = true);
@@ -118,17 +149,27 @@ class _HomeState extends State<HomeScreen> {
         return;
       }
 
-      // Gunakan akurasi Medium agar lebih cepat mengunci lokasi
+      // Gunakan akurasi Low agar lebih cepat mengunci lokasi
       Position position = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.medium,
-        timeLimit: Duration(seconds: 10),
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 5),
       ));
 
       await _fetchData(lat: position.latitude, lon: position.longitude);
     } catch (e) {
       debugPrint("Location error: $e");
-      await _fetchData(); // Fallback fetch tanpa koordinat baru
+      // Check offline mode again before fallback fetch
+      if (!_cacheService.getOfflineMode()) {
+        await _fetchData(); // Fallback fetch tanpa koordinat baru
+      } else {
+        if (mounted) {
+          setState(() {
+            isOnline = false;
+            isLoading = false;
+          });
+        }
+      }
     }
   }
 

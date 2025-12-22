@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:petani_maju/core/constants/colors.dart';
+import 'package:petani_maju/core/services/cache_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -9,7 +10,38 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _offlineMode = true;
+  final CacheService _cacheService = CacheService();
+  bool _offlineMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOfflineMode();
+  }
+
+  void _loadOfflineMode() {
+    setState(() {
+      _offlineMode = _cacheService.getOfflineMode();
+    });
+  }
+
+  Future<void> _toggleOfflineMode(bool value) async {
+    await _cacheService.setOfflineMode(value);
+    setState(() {
+      _offlineMode = value;
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(value
+              ? 'Mode Offline aktif - Hanya menggunakan data cache'
+              : 'Mode Online aktif - Mengambil data terbaru'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: Icons.cloud_off_outlined,
                   title: 'Mode Offline',
                   value: _offlineMode,
-                  onChanged: (value) {
-                    setState(() {
-                      _offlineMode = value;
-                    });
-                  },
+                  onChanged: _toggleOfflineMode,
                 ),
               ]),
               const SizedBox(height: 24),

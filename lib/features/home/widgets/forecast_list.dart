@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:petani_maju/utils/weather_utils.dart';
 
@@ -102,7 +103,21 @@ class ForecastList extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Image.network(getIconUrl(iconCode), width: 36, height: 36),
+                CachedNetworkImage(
+                  imageUrl: getIconUrl(iconCode),
+                  width: 36,
+                  height: 36,
+                  placeholder: (context, url) => const Icon(
+                    Icons.cloud,
+                    size: 36,
+                    color: Colors.grey,
+                  ),
+                  errorWidget: (context, url, error) => const Icon(
+                    Icons.cloud,
+                    size: 36,
+                    color: Colors.grey,
+                  ),
+                ),
                 Text(
                   '$temp°',
                   style: const TextStyle(

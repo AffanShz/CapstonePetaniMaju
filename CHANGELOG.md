@@ -17,6 +17,76 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/lang/id/).
 
 ---
 
+## [0.2.0] - 2024-12-21
+
+### 🎉 Offline Mode & Stability Update
+
+Rilis yang berfokus pada stabilitas dan dukungan offline untuk pengalaman pengguna yang lebih baik.
+
+### Added
+
+#### 📴 Fitur Offline Mode
+- Toggle Offline Mode di halaman Settings
+- Auto-enable offline mode ketika tidak ada koneksi saat startup
+- Snackbar notifikasi ketika app start dalam mode offline
+- Pest data caching menggunakan Hive
+
+#### ⏱️ Timeout Management
+- Supabase initialization timeout (10 detik)
+- Weather API timeout (10 detik)
+- Tips API timeout (10 detik)
+- Pest API timeout (10 detik)
+- Location API timeout (10 detik)
+- Geolocator timeout (5 detik)
+
+### Changed
+
+#### 🔄 Improved Image Loading
+- Semua `Image.network` diganti dengan `CachedNetworkImage`
+- Fallback icons ketika gambar gagal dimuat
+- Placeholder icons saat loading
+
+#### ⚡ Performance Improvements
+- Deferred initialization menggunakan `addPostFrameCallback`
+- Reduced location accuracy untuk startup lebih cepat
+- Simplified navigation (tanpa IndexedStack caching)
+
+### Fixed
+
+#### 🐛 Bug Fixes
+- App freeze saat tidak ada internet
+- App crash saat kembali dari detail screen
+- Splash screen stuck saat offline
+- setState called after dispose
+- Frame skipping saat startup
+
+### Technical Details
+
+#### New Dependencies
+```yaml
+dependencies:
+  cached_network_image: ^3.4.1  # Untuk image caching
+```
+
+#### Updated Files
+- `lib/main.dart` - Supabase timeout, offline detection
+- `lib/core/services/cache_service.dart` - Pest caching, offline mode
+- `lib/data/datasources/weather_service.dart` - 10s timeout
+- `lib/data/datasources/tips_services.dart` - 10s timeout
+- `lib/data/datasources/pest_services.dart` - 10s timeout
+- `lib/data/datasources/location_service.dart` - 10s timeout
+- `lib/features/home/screens/home_screen.dart` - Deferred init, offline check
+- `lib/features/tips/screens/tips_screen.dart` - Deferred init, offline check
+- `lib/features/pests/screens/pest_screen.dart` - Deferred init, offline check
+- `lib/features/weather/screens/weather_detail_screen.dart` - Offline check
+- `lib/features/settings/screens/settings_screen.dart` - Offline toggle
+- `lib/widgets/main_weather_card.dart` - CachedNetworkImage
+- `lib/features/home/widgets/forecast_list.dart` - CachedNetworkImage
+- `lib/widgets/navbaar.dart` - Simplified navigation
+
+---
+
+
 ## [0.1.0] - 2024-12-17
 
 ### 🎉 Initial Release
