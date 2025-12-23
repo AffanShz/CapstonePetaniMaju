@@ -29,13 +29,18 @@ class _HomeState extends State<HomeScreen> {
   final WeatherService _weatherService = WeatherService();
   final LocationService _locationService = LocationService();
   final CacheService _cacheService = CacheService();
+  // Opsional: Anda bisa membuat instance di sini juga agar lebih rapi
+  // final NotificationService _notificationService = NotificationService();
 
   bool isLoading = true;
   String errorMessage = "";
   Map<String, dynamic>? currentWeather;
   List<dynamic> forecastList = [];
-  String? rainAlertMessage;
-  bool isRainPredicted = false;
+
+  // Variabel untuk Alert Dinamis (Rekomendasi Tanaman)
+  String? alertMessage;
+  bool isAlertVisible = false;
+
   String? detailedLocation;
 
   // Sync status
@@ -53,7 +58,8 @@ class _HomeState extends State<HomeScreen> {
       if (mounted) {
         initializeDateFormatting('id_ID', null).then((_) {
           if (mounted) {
-            NotificationService.requestPermissions();
+            // PERBAIKAN: Gunakan NotificationService()
+            NotificationService().requestPermissions();
             _loadData();
           }
         });
@@ -99,8 +105,8 @@ class _HomeState extends State<HomeScreen> {
             lastSyncTime = cacheTime;
             isLoading = false;
 
-            // Cek hujan dari data cache (Notifikasi bisa muncul instan dari sini)
-            _checkRainAlertSafely(forecastList);
+            // Generate rekomendasi dari cache
+            _generateRecommendation(cachedWeather);
           });
         }
       }
@@ -202,9 +208,6 @@ class _HomeState extends State<HomeScreen> {
         forecastList: rawList,
       );
 
-      // Cek hujan pada data baru
-      _checkRainAlertSafely(rawList);
-
       if (mounted) {
         setState(() {
           currentWeather = current;
@@ -216,6 +219,9 @@ class _HomeState extends State<HomeScreen> {
           isLoading = false;
           errorMessage = "";
         });
+
+        // Panggil fungsi rekomendasi (Sesuai request sebelumnya: Alert Dinamis)
+        _generateRecommendation(current);
       }
     } catch (e) {
       debugPrint("Fetch data error: $e");
@@ -235,57 +241,38 @@ class _HomeState extends State<HomeScreen> {
     }
   }
 
-  void _checkRainAlertSafely(List<dynamic> rawList) {
-    if (rawList.isEmpty) return;
+  // --- LOGIKA UTAMA: ALERT BERISI REKOMENDASI ---
+  void _generateRecommendation(Map<String, dynamic>? current) {
+    if (current == null || current['weather'] == null) return;
 
-    try {
-      String? foundRainAlert;
+    final List<dynamic> weatherList = current['weather'];
+    if (weatherList.isEmpty) return;
 
-      for (var item in rawList) {
-        // Validasi null safety yang ketat
-        if (item == null || item['dt_txt'] == null || item['weather'] == null) {
-          continue;
-        }
+    final int conditionId = weatherList[0]['id'];
 
-        List<dynamic> weatherList = item['weather'];
-        if (weatherList.isEmpty) continue;
+    // Menggunakan WeatherUtils yang sudah diupdate untuk rekomendasi
+    final String? recommendation = WeatherUtils.getRecommendation(conditionId);
 
-        DateTime date = DateTime.parse(item['dt_txt']);
-        String weatherMain = weatherList[0]['main'] ?? '';
-        String description = weatherList[0]['description'] ?? '';
-
-        // Deteksi hujan dalam 24 jam ke depan
-        if (foundRainAlert == null &&
-            date.isBefore(DateTime.now().add(const Duration(hours: 24))) &&
-            (weatherMain == 'Rain' || weatherMain == 'Thunderstorm')) {
-          String timeStr = DateFormat('HH:mm').format(date);
-          String translatedDesc = WeatherUtils.translateWeather(description);
-          foundRainAlert =
-              "Hujan ($translatedDesc) diprediksi pukul $timeStr. Cek drainase.";
-        }
-      }
-
-      // --- LOGIKA NOTIFIKASI OTOMATIS ---
-      // Jika ditemukan hujan DAN notifikasi belum pernah ditampilkan di sesi ini
-      if (foundRainAlert != null && !_hasShownNotification) {
-        NotificationService.showNotification(
-          id: 888, // ID unik untuk weather alert
-          title: 'Peringatan Hujan!',
-          body: foundRainAlert,
-        );
-        // Set flag agar tidak spam notifikasi saat user refresh layar
-        _hasShownNotification = true;
-      }
-      // ----------------------------------
-
+    if (recommendation != null) {
       if (mounted) {
         setState(() {
-          rainAlertMessage = foundRainAlert;
-          isRainPredicted = foundRainAlert != null;
+          alertMessage = recommendation;
+          isAlertVisible = true;
         });
       }
-    } catch (e) {
-      debugPrint("Check rain alert error: $e");
+
+      // Notifikasi (Opsional: agar user tau ada rekomendasi baru)
+      if (!_hasShownNotification) {
+        // PERBAIKAN: Gunakan NotificationService()
+        NotificationService().showNotification(
+          id: 101,
+          title: 'Info Tanaman',
+          body: recommendation,
+        );
+        _hasShownNotification = true;
+      }
+    } else {
+      if (mounted) setState(() => isAlertVisible = false);
     }
   }
 
@@ -346,15 +333,16 @@ class _HomeState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 20),
 
-                            // Widget Alert Merah di Layar (selain notifikasi bar)
-                            if (isRainPredicted &&
-                                rainAlertMessage != null) ...[
-                              WeatherAlert(message: rainAlertMessage!),
+                            // --- WIDGET ALERT MERAH (ISI REKOMENDASI) ---
+                            // Tampil hanya jika ada rekomendasi
+                            if (isAlertVisible && alertMessage != null) ...[
+                              WeatherAlert(message: alertMessage!),
                               const SizedBox(height: 20),
                             ],
+                            // --------------------------------------------
 
                             const SectionHeader(
-                                title: 'Prediksi Cuaca (Per 4 Jam)'),
+                                title: 'Prediksi Cuaca (Per 3 Jam)'),
                             const SizedBox(height: 20),
                             ForecastList(forecastData: forecastList),
                             const SizedBox(height: 20),
