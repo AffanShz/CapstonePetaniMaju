@@ -18,7 +18,8 @@ Future<void> main() async {
   // Initialize Hive for local caching
   await CacheService.init();
 
-  await NotificationService.init();
+  // PERBAIKAN: Gunakan NotificationService() dengan tanda kurung karena sekarang Singleton
+  await NotificationService().init();
 
   // Initialize Supabase with timeout to prevent hanging when offline
   try {
