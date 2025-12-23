@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:petani_maju/data/datasources/tips_services.dart';
 import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/features/tips/screens/tips_detail_screen.dart';
@@ -22,7 +23,10 @@ class _TipsScreenState extends State<TipsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadTips();
+    // Defer to after first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadTips();
+    });
   }
 
   Future<void> _loadTips() async {
@@ -37,7 +41,18 @@ class _TipsScreenState extends State<TipsScreen> {
       }
     }
 
-    // 2. Fetch from API
+    // 2. Check if offline mode is enabled
+    final offlineMode = _cacheService.getOfflineMode();
+    if (offlineMode) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    // 3. Fetch from API (online mode only)
     try {
       final freshTips = await _tipsService.fetchTips();
 
@@ -255,12 +270,18 @@ class _TipsScreenState extends State<TipsScreen> {
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(12)),
                   child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Center(
+                          placeholder: (context, url) => const Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => const Center(
                             child: Icon(Icons.image, color: Colors.grey),
                           ),
                         )

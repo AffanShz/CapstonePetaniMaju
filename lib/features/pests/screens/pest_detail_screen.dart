@@ -1,77 +1,97 @@
+// lib/features/pests/screens/pest_detail_screen.dart
+
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PestDetailScreen extends StatelessWidget {
-  const PestDetailScreen({super.key});
+  // Terima data pest dari halaman sebelumnya
+  final Map<String, dynamic> pest;
+
+  const PestDetailScreen({super.key, required this.pest});
 
   @override
   Widget build(BuildContext context) {
+    // Ambil data dengan fallback value jika null
+    // Schema Supabase: id, created_at, nama, kategori, gambar_url, deskripsi, ciri_ciri, dampak, cara_mengatasi
+    final String title = pest['nama'] ?? 'Detail Hama';
+    final String category = pest['kategori'] ?? 'Umum';
+    final String imageUrl = pest['gambar_url'] ?? '';
+    final String? deskripsi = pest['deskripsi'];
+    final String characteristics =
+        pest['ciri_ciri'] ?? 'Belum ada informasi ciri-ciri.';
+    // Data dampak dipisahkan baris baru (\n) di database
+    final String rawDampak = pest['dampak'] ?? 'Belum ada informasi dampak.';
+    final List<String> impactList = rawDampak.split('\n');
+    final String solution =
+        pest['cara_mengatasi'] ?? 'Belum ada informasi penanganan.';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail Hama'),
+        title: Text(title), // Judul Dinamis
       ),
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding:
-                const EdgeInsets.only(bottom: 80), // Space for bottom button
+            padding: const EdgeInsets.only(bottom: 80),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Gambar Dinamis
                 Container(
-                  height: 250,
+                  height: 300,
                   width: double.infinity,
-                  color:
-                      Colors.black, // Placeholder for dark background in image
-                  child: Image.asset('assets/images/wereng.jpg',
-                      fit: BoxFit.cover), // Placeholder
+                  color: Colors.grey[300],
+                  child: imageUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: 300,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          errorWidget: (context, url, error) => const Center(
+                            child: Icon(Icons.broken_image, size: 70),
+                          ),
+                        )
+                      : const Center(child: Icon(Icons.image, size: 70)),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Kategori Dinamis
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.green.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Text('Hama Padi',
-                            style: TextStyle(color: Colors.red)),
+                        child: Text(category,
+                            style: const TextStyle(color: Colors.green)),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Wereng Coklat',
-                        style: TextStyle(
+                      Text(
+                        title,
+                        style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 24),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade200),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Ciri-ciri',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Hama ini memiliki karakteristik yang mudah dikenali. Umumnya menyerang pada fase tertentu dari pertumbuhan tanaman. Perhatikan gejala awal untuk pencegahan yang lebih efektif.',
-                              style: TextStyle(
-                                  color: Colors.grey[700], height: 1.5),
-                            ),
-                          ],
-                        ),
-                      ),
                       const SizedBox(height: 16),
+
+                      // Bagian Deskripsi (jika ada)
+                      if (deskripsi != null && deskripsi.isNotEmpty) ...[
+                        _buildInfoSection('Deskripsi', deskripsi),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Bagian Ciri-ciri
+                      _buildInfoSection('Ciri-ciri', characteristics),
+
+                      const SizedBox(height: 16),
+
+                      // Bagian Dampak (Looping Bullet Points)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -88,12 +108,9 @@ class PestDetailScreen extends StatelessWidget {
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),
-                            _buildBulletPoint(
-                                'Penurunan hasil panen hingga 30-40%'),
-                            _buildBulletPoint(
-                                'Kerusakan pada daun dan batang tanaman'),
-                            _buildBulletPoint('Penyebaran penyakit sekunder'),
-                            _buildBulletPoint('Menghambat pertumbuhan tanaman'),
+                            // Generate bullet points dari data
+                            ...impactList
+                                .map((item) => _buildBulletPoint(item)),
                           ],
                         ),
                       ),
@@ -103,6 +120,8 @@ class PestDetailScreen extends StatelessWidget {
               ],
             ),
           ),
+
+          // Tombol Cara Mengatasi
           Positioned(
             bottom: 0,
             left: 0,
@@ -120,9 +139,12 @@ class PestDetailScreen extends StatelessWidget {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  // Tampilkan cara mengatasi dalam BottomSheet
+                  _showSolutionBottomSheet(context, solution);
+                },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Match theme
+                  backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
@@ -140,7 +162,33 @@ class PestDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildInfoSection(String title, String content) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            content,
+            style: TextStyle(color: Colors.grey[700], height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBulletPoint(String text) {
+    if (text.trim().isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -149,10 +197,43 @@ class PestDetailScreen extends StatelessWidget {
           const Text('• ',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           Expanded(
-              child: Text(text,
+              child: Text(text.trim(),
                   style: TextStyle(color: Colors.grey[700], fontSize: 16))),
         ],
       ),
+    );
+  }
+
+  void _showSolutionBottomSheet(BuildContext context, String solution) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          width: double.infinity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Cara Mengatasi',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Text(solution, style: const TextStyle(fontSize: 16, height: 1.5)),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Tutup'),
+                ),
+              )
+            ],
+          ),
+        );
+      },
     );
   }
 }

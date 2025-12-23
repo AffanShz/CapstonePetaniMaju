@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LocationService {
-  // Using OpenStreetMap Nominatim for reverse geocoding (free, no API key)
+  // Timeout for requests
+  static const Duration _timeout = Duration(seconds: 10);
+
   Future<Map<String, String>> getDetailedLocation(
       double lat, double lon) async {
     try {
@@ -11,7 +14,7 @@ class LocationService {
 
       final response = await http.get(url, headers: {
         'User-Agent': 'PetaniMaju/1.0',
-      });
+      }).timeout(_timeout);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -29,7 +32,7 @@ class LocationService {
         };
       }
     } catch (e) {
-      // Return empty if geocoding fails
+      // Return empty if geocoding fails or timeout
     }
 
     return {

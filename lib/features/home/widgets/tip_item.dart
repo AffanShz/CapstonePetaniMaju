@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:petani_maju/features/tips/screens/tips_detail_screen.dart';
 
 class TipItem extends StatelessWidget {
@@ -40,12 +41,23 @@ class TipItem extends StatelessWidget {
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Image.network(
-                image,
+              child: CachedNetworkImage(
+                imageUrl: image,
                 height: 100,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                placeholder: (context, url) => Container(
+                  height: 100,
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
                   height: 100,
                   color: Colors.grey[300],
                   child: const Icon(Icons.image, color: Colors.grey),

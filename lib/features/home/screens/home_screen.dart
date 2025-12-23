@@ -38,24 +38,47 @@ class _HomeState extends State<HomeScreen> {
   bool isRainPredicted = false;
   String? detailedLocation;
 
+  // Sync status
+  DateTime? lastSyncTime;
+  bool isOnline = true;
+
   // Flag untuk mencegah notifikasi muncul berulang kali saat refresh
   bool _hasShownNotification = false;
 
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting('id_ID', null).then((_) {
+    // Defer ALL initialization to after first frame renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        // Minta izin notifikasi segera setelah aplikasi dibuka
-        NotificationService.requestPermissions();
-        _loadData();
+        initializeDateFormatting('id_ID', null).then((_) {
+          if (mounted) {
+            NotificationService.requestPermissions();
+            _loadData();
+          }
+        });
       }
     });
   }
 
   Future<void> _loadData() async {
+    // Check if offline mode is enabled
+    final offlineMode = _cacheService.getOfflineMode();
+
     // Load data cache dulu agar tampilan tidak kosong
     _loadFromCache();
+
+    // Jika offline mode aktif, hanya gunakan cache
+    if (offlineMode) {
+      if (mounted) {
+        setState(() {
+          isOnline = false;
+          isLoading = false;
+        });
+      }
+      return;
+    }
+
     // Kemudian ambil data baru dari internet
     await _checkLocationPermissionAndFetch();
   }
@@ -65,6 +88,7 @@ class _HomeState extends State<HomeScreen> {
       final cachedWeather = _cacheService.getCachedCurrentWeather();
       final cachedForecast = _cacheService.getCachedForecast();
       final cachedLocation = _cacheService.getCachedDetailedLocation();
+      final cacheTime = _cacheService.getWeatherCacheTime();
 
       if (cachedWeather != null) {
         if (mounted) {
@@ -72,6 +96,7 @@ class _HomeState extends State<HomeScreen> {
             currentWeather = cachedWeather;
             forecastList = cachedForecast ?? [];
             detailedLocation = cachedLocation;
+            lastSyncTime = cacheTime;
             isLoading = false;
 
             // Cek hujan dari data cache (Notifikasi bisa muncul instan dari sini)
@@ -85,6 +110,18 @@ class _HomeState extends State<HomeScreen> {
   }
 
   Future<void> _checkLocationPermissionAndFetch() async {
+    // Skip if offline mode is enabled
+    final offlineMode = _cacheService.getOfflineMode();
+    if (offlineMode) {
+      if (mounted) {
+        setState(() {
+          isOnline = false;
+          isLoading = false;
+        });
+      }
+      return;
+    }
+
     // Tampilkan loading hanya jika benar-benar tidak ada data (cache kosong)
     if (currentWeather == null && mounted) {
       setState(() => isLoading = true);
@@ -112,17 +149,27 @@ class _HomeState extends State<HomeScreen> {
         return;
       }
 
-      // Gunakan akurasi Medium agar lebih cepat mengunci lokasi
+      // Gunakan akurasi Low agar lebih cepat mengunci lokasi
       Position position = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.medium,
-        timeLimit: Duration(seconds: 10),
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 5),
       ));
 
       await _fetchData(lat: position.latitude, lon: position.longitude);
     } catch (e) {
       debugPrint("Location error: $e");
-      await _fetchData(); // Fallback fetch tanpa koordinat baru
+      // Check offline mode again before fallback fetch
+      if (!_cacheService.getOfflineMode()) {
+        await _fetchData(); // Fallback fetch tanpa koordinat baru
+      } else {
+        if (mounted) {
+          setState(() {
+            isOnline = false;
+            isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -164,6 +211,8 @@ class _HomeState extends State<HomeScreen> {
           forecastList = rawList;
           detailedLocation =
               locationStr ?? _cacheService.getCachedDetailedLocation();
+          lastSyncTime = DateTime.now();
+          isOnline = true;
           isLoading = false;
           errorMessage = "";
         });
@@ -175,9 +224,13 @@ class _HomeState extends State<HomeScreen> {
         setState(() {
           errorMessage = "Gagal memuat data. Periksa koneksi internet.";
           isLoading = false;
+          isOnline = false;
         });
       } else if (mounted) {
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+          isOnline = false;
+        });
       }
     }
   }
@@ -270,7 +323,10 @@ class _HomeState extends State<HomeScreen> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         child: Column(
                           children: [
-                            const CustomAppBar(),
+                            CustomAppBar(
+                              lastSyncTime: lastSyncTime,
+                              isOnline: isOnline,
+                            ),
                             const SizedBox(height: 20),
                             GestureDetector(
                               onTap: () {
