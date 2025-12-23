@@ -9,7 +9,7 @@ class WeatherAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.lightRed,
         borderRadius: BorderRadius.circular(16),
@@ -21,31 +21,31 @@ class WeatherAlert extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.red,
+              color: AppColors.red, 
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.notifications_active_outlined,
+              Icons.notifications_active_outlined, 
               color: AppColors.white,
               size: 24,
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'PERINGATAN CUACA!',
+                  'PERINGATAN CUACA!', 
                   style: TextStyle(
                     color: Colors.red[900],
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   message,
                   style: TextStyle(

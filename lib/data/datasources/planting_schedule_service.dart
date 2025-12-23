@@ -1,13 +1,8 @@
-// lib/data/datasources/planting_schedule_service.dart
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PlantingScheduleService {
   final _supabase = Supabase.instance.client;
 
-  // ... (fungsi fetchSchedules dan addSchedule yang sudah ada) ...
-
-  // 1. Ambil semua jadwal (kode lama tetap)
   Future<List<Map<String, dynamic>>> fetchSchedules() async {
     try {
       final response = await _supabase
@@ -20,7 +15,6 @@ class PlantingScheduleService {
     }
   }
 
-  // 2. Tambah jadwal baru (kode lama tetap)
   Future<void> addSchedule({
     required String namaTanaman,
     required DateTime tanggalTanam,
@@ -37,7 +31,6 @@ class PlantingScheduleService {
     }
   }
 
-  // === FITUR BARU: UPDATE JADWAL ===
   Future<void> updateSchedule({
     required int id,
     required String namaTanaman,
@@ -49,7 +42,7 @@ class PlantingScheduleService {
         'nama_tanaman': namaTanaman,
         'tanggal_tanam': tanggalTanam.toIso8601String(),
         'catatan': catatan,
-      }).eq('id', id); // Update berdasarkan ID
+      }).eq('id', id); 
     } catch (e) {
       throw Exception('Gagal mengupdate jadwal: $e');
     }
