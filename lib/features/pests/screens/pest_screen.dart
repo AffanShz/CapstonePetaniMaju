@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:petani_maju/data/datasources/pest_services.dart';
-import 'package:petani_maju/core/services/cache_service.dart';
+
+import 'package:petani_maju/features/pests/bloc/pest_bloc.dart';
 import 'package:petani_maju/features/pests/screens/pest_detail_screen.dart';
+import 'package:petani_maju/data/repositories/pest_repository.dart';
 
 class PestScreen extends StatefulWidget {
   const PestScreen({super.key});
@@ -12,26 +14,7 @@ class PestScreen extends StatefulWidget {
 }
 
 class _PestScreenState extends State<PestScreen> {
-  final PestService _pestService = PestService();
-  final CacheService _cacheService = CacheService();
-  String _selectedCategory = 'Semua';
-  String _searchQuery = '';
-
   final TextEditingController _searchController = TextEditingController();
-
-  // State untuk data
-  List<Map<String, dynamic>> _pests = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    // Defer to after first frame renders
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _loadPests();
-    });
-  }
 
   @override
   void dispose() {
@@ -39,157 +22,129 @@ class _PestScreenState extends State<PestScreen> {
     super.dispose();
   }
 
-  Future<void> _loadPests() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    // 1. Load from cache first
-    final cachedPests = _cacheService.getCachedPests();
-    if (cachedPests != null && cachedPests.isNotEmpty) {
-      setState(() {
-        _pests = cachedPests;
-        _isLoading = false;
-      });
-    }
-
-    // 2. Check if offline mode is enabled
-    final offlineMode = _cacheService.getOfflineMode();
-    if (offlineMode) {
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    // 3. Fetch from Supabase (online mode)
-    try {
-      final pests = await _pestService.fetchPests(query: _searchQuery);
-
-      // Save to cache
-      await _cacheService.savePestsData(pests);
-
-      setState(() {
-        _pests = pests;
-        _isLoading = false;
-      });
-    } catch (e) {
-      // Only show error if we don't have cached data
-      if (_pests.isEmpty) {
-        setState(() {
-          _errorMessage = e.toString();
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  List<Map<String, dynamic>> get _filteredPests {
-    if (_selectedCategory == 'Semua') return _pests;
-    return _pests
-        .where((pest) => pest['kategori'] == _selectedCategory)
-        .toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Info Hama & Penyakit'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    return BlocProvider(
+      create: (context) => PestBloc(
+        pestRepository: context.read<PestRepository>(),
+      )..add(LoadPests()),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Info Hama & Penyakit'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Search Bar
-                TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                    // Debounce search
-                    Future.delayed(const Duration(milliseconds: 500), () {
-                      if (_searchQuery == value) {
-                        _loadPests();
-                      }
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Cari hama atau penyakit...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // Search Bar
+                  BlocBuilder<PestBloc, PestState>(
+                    builder: (context, state) {
+                      return TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          // Debounce search
+                          Future.delayed(const Duration(milliseconds: 500), () {
+                            if (_searchController.text == value) {
+                              context
+                                  .read<PestBloc>()
+                                  .add(SearchPests(query: value));
+                            }
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Cari hama atau penyakit...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // Filter Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildChip('Semua'),
-                      _buildChip('Hama Padi'),
-                      _buildChip('Hama Jagung'),
-                      _buildChip('Hama Umum'),
-                    ],
+                  // Filter Chips
+                  BlocBuilder<PestBloc, PestState>(
+                    builder: (context, state) {
+                      final selectedCategory = state is PestLoaded
+                          ? state.selectedCategory
+                          : 'Semua';
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildChip(context, 'Semua', selectedCategory),
+                            _buildChip(context, 'Hama Padi', selectedCategory),
+                            _buildChip(
+                                context, 'Hama Jagung', selectedCategory),
+                            _buildChip(context, 'Hama Umum', selectedCategory),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: _buildContent(),
-          ),
-        ],
+            Expanded(
+              child: BlocBuilder<PestBloc, PestState>(
+                builder: (context, state) {
+                  if (state is PestLoading || state is PestInitial) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state is PestError) {
+                    return _buildErrorWidget(context, state.message);
+                  }
+
+                  if (state is PestLoaded) {
+                    return _buildPestList(context, state);
+                  }
+
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  Widget _buildPestList(BuildContext context, PestLoaded state) {
+    final pests = state.filteredPests;
 
-    if (_errorMessage != null) {
-      return _buildErrorWidget();
-    }
-
-    if (_pests.isEmpty) {
-      return const Center(child: Text('Data tidak ditemukan'));
-    }
-
-    final filteredPests = _filteredPests;
-
-    if (filteredPests.isEmpty) {
-      return const Center(child: Text('Tidak ada hama di kategori ini'));
+    if (pests.isEmpty) {
+      return Center(
+        child: Text(
+          state.searchQuery.isNotEmpty || state.selectedCategory != 'Semua'
+              ? 'Tidak ada hama ditemukan'
+              : 'Data tidak ditemukan',
+        ),
+      );
     }
 
     return RefreshIndicator(
-      onRefresh: _loadPests,
+      onRefresh: () async {
+        context.read<PestBloc>().add(RefreshPests());
+      },
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: filteredPests.length,
+        itemCount: pests.length,
         itemBuilder: (context, index) {
-          final pest = filteredPests[index];
+          final pest = pests[index];
           return _buildPestCard(
             context,
             pest['nama'] ?? 'Tanpa Nama',
@@ -202,7 +157,7 @@ class _PestScreenState extends State<PestScreen> {
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(BuildContext context, String message) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -223,7 +178,9 @@ class _PestScreenState extends State<PestScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: _loadPests,
+              onPressed: () {
+                context.read<PestBloc>().add(LoadPests());
+              },
               icon: const Icon(Icons.refresh),
               label: const Text('Coba Lagi'),
               style: ElevatedButton.styleFrom(
@@ -239,8 +196,9 @@ class _PestScreenState extends State<PestScreen> {
     );
   }
 
-  Widget _buildChip(String label) {
-    final isSelected = _selectedCategory == label;
+  Widget _buildChip(
+      BuildContext context, String label, String selectedCategory) {
+    final isSelected = selectedCategory == label;
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: ChoiceChip(
@@ -255,9 +213,9 @@ class _PestScreenState extends State<PestScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         onSelected: (selected) {
           if (selected) {
-            setState(() {
-              _selectedCategory = label;
-            });
+            context
+                .read<PestBloc>()
+                .add(FilterPestsByCategory(category: label));
           }
         },
       ),

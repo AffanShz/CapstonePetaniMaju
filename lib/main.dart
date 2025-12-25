@@ -1,10 +1,32 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+// Core Services
 import 'package:petani_maju/core/services/cache_service.dart';
-import 'package:petani_maju/widgets/navbaar.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
+
+// Datasources
+import 'package:petani_maju/data/datasources/weather_service.dart';
+import 'package:petani_maju/data/datasources/location_service.dart';
+import 'package:petani_maju/data/datasources/pest_services.dart';
+import 'package:petani_maju/data/datasources/tips_services.dart';
+import 'package:petani_maju/data/datasources/planting_schedule_service.dart';
+
+// Repositories
+import 'package:petani_maju/data/repositories/weather_repository.dart';
+import 'package:petani_maju/data/repositories/pest_repository.dart';
+import 'package:petani_maju/data/repositories/tips_repository.dart';
+import 'package:petani_maju/data/repositories/calendar_repository.dart';
+
+// Global BLoC
+import 'package:petani_maju/logic/app_lifecycle/app_bloc.dart';
+
+// UI
+import 'package:petani_maju/widgets/navbaar.dart';
 
 // Global flag to track if app started offline
 bool appStartedOffline = false;
@@ -18,8 +40,11 @@ Future<void> main() async {
   // Initialize Hive for local caching
   await CacheService.init();
 
-  // PERBAIKAN: Gunakan NotificationService() dengan tanda kurung karena sekarang Singleton
+  // Initialize NotificationService
   await NotificationService().init();
+
+  // Initialize date formatting
+  await initializeDateFormatting('id_ID', null);
 
   // Initialize Supabase with timeout to prevent hanging when offline
   try {
@@ -31,7 +56,6 @@ Future<void> main() async {
   } on TimeoutException {
     debugPrint('Supabase initialization timeout - continuing offline');
     appStartedOffline = true;
-    // Set offline mode automatically when no internet
     CacheService().setOfflineMode(true);
   } catch (e) {
     debugPrint('Supabase initialization error: $e - continuing offline');
@@ -47,68 +71,88 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Petani Maju',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        useMaterial3: true,
-      ),
-      home: const _AppWrapper(),
-    );
-  }
-}
+    // Create singleton instances of services
+    final cacheService = CacheService();
+    final weatherService = WeatherService();
+    final locationService = LocationService();
+    final pestService = PestService();
+    final tipsService = TipsService();
+    final scheduleService = PlantingScheduleService();
 
-// Wrapper to show offline message on startup
-class _AppWrapper extends StatefulWidget {
-  const _AppWrapper();
-
-  @override
-  State<_AppWrapper> createState() => _AppWrapperState();
-}
-
-class _AppWrapperState extends State<_AppWrapper> {
-  @override
-  void initState() {
-    super.initState();
-    // Show offline message after build completes
-    if (appStartedOffline) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showOfflineMessage();
-      });
-    }
-  }
-
-  void _showOfflineMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.wifi_off, color: Colors.white),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Tidak ada koneksi internet. Aplikasi berjalan dalam mode offline.',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
+    return MultiRepositoryProvider(
+      providers: [
+        // Repositories
+        RepositoryProvider<WeatherRepository>(
+          create: (_) => WeatherRepository(
+            weatherService: weatherService,
+            locationService: locationService,
+            cacheService: cacheService,
+          ),
         ),
-        backgroundColor: Colors.orange.shade700,
-        duration: const Duration(seconds: 5),
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: Colors.white,
-          onPressed: () {},
+        RepositoryProvider<PestRepository>(
+          create: (_) => PestRepository(
+            pestService: pestService,
+            cacheService: cacheService,
+          ),
+        ),
+        RepositoryProvider<TipsRepository>(
+          create: (_) => TipsRepository(
+            tipsService: tipsService,
+            cacheService: cacheService,
+          ),
+        ),
+        RepositoryProvider<CalendarRepository>(
+          create: (_) => CalendarRepository(
+            scheduleService: scheduleService,
+          ),
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          // Global AppBloc
+          BlocProvider<AppBloc>(
+            create: (context) => AppBloc(
+              cacheService: cacheService,
+            )..add(AppStarted()),
+          ),
+        ],
+        child: MaterialApp(
+          title: 'Petani Maju',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+            scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+            useMaterial3: true,
+          ),
+          home: BlocListener<AppBloc, AppState>(
+            listener: (context, state) {
+              // Show offline message when app starts offline
+              if (state is AppReady && !state.isConnected) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Row(
+                      children: [
+                        Icon(Icons.wifi_off, color: Colors.white),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Tidak ada koneksi internet. Menggunakan data tersimpan.',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: Colors.orange.shade700,
+                    duration: const Duration(seconds: 4),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: const MainScreen(),
+          ),
         ),
       ),
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const MainScreen();
   }
 }

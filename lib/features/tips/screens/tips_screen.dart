@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:petani_maju/data/datasources/tips_services.dart';
-import 'package:petani_maju/core/services/cache_service.dart';
+
+import 'package:petani_maju/features/tips/bloc/tips_bloc.dart';
 import 'package:petani_maju/features/tips/screens/tips_detail_screen.dart';
 
 class TipsScreen extends StatefulWidget {
@@ -12,77 +13,7 @@ class TipsScreen extends StatefulWidget {
 }
 
 class _TipsScreenState extends State<TipsScreen> {
-  final TipsService _tipsService = TipsService();
-  final CacheService _cacheService = CacheService();
-
-  List<Map<String, dynamic>> _allTips = [];
-  bool _isLoading = true;
-  String? _error;
   String _selectedCategory = 'Semua';
-
-  @override
-  void initState() {
-    super.initState();
-    // Defer to after first frame renders
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _loadTips();
-    });
-  }
-
-  Future<void> _loadTips() async {
-    // 1. Load from cache first
-    final cachedTips = _cacheService.getCachedTips();
-    if (cachedTips != null && cachedTips.isNotEmpty) {
-      if (mounted) {
-        setState(() {
-          _allTips = cachedTips;
-          _isLoading = false;
-        });
-      }
-    }
-
-    // 2. Check if offline mode is enabled
-    final offlineMode = _cacheService.getOfflineMode();
-    if (offlineMode) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-      return;
-    }
-
-    // 3. Fetch from API (online mode only)
-    try {
-      final freshTips = await _tipsService.fetchTips();
-
-      // Save to cache
-      await _cacheService.saveTipsData(freshTips);
-
-      if (mounted) {
-        setState(() {
-          _allTips = freshTips;
-          _isLoading = false;
-          _error = null;
-        });
-      }
-    } catch (e) {
-      if (_allTips.isEmpty) {
-        if (mounted) {
-          setState(() {
-            _error = "Gagal memuat tips: $e";
-            _isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    }
-  }
 
   void _onCategorySelected(String category) {
     setState(() {
@@ -103,79 +34,90 @@ class _TipsScreenState extends State<TipsScreen> {
       appBar: AppBar(
         title: const Text('Tips Pertanian'),
       ),
-      body: _isLoading && _allTips.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null && _allTips.isEmpty
-              ? Center(
+      body: BlocBuilder<TipsBloc, TipsState>(
+        builder: (context, state) {
+          if (state is TipsInitial || state is TipsLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is TipsError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 8),
+                  Text(state.message),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<TipsBloc>().add(LoadTips());
+                    },
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (state is TipsLoaded) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<TipsBloc>().add(RefreshTips());
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
-                      const SizedBox(height: 8),
-                      Text(_error!),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadTips,
-                        child: const Text('Coba Lagi'),
+                      // Search Bar
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Cari tips...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
                       ),
+                      const SizedBox(height: 16),
+                      // Chips
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildChip('Semua', _selectedCategory == 'Semua'),
+                            _buildChip('Padi', _selectedCategory == 'Padi'),
+                            _buildChip('Jagung', _selectedCategory == 'Jagung'),
+                            _buildChip(
+                                'Nutrisi', _selectedCategory == 'Nutrisi'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Tips Grid
+                      _buildTipsGrid(state.tips),
                     ],
                   ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadTips,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          // Search Bar
-                          TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Cari tips...',
-                              prefixIcon: const Icon(Icons.search),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Chips
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                _buildChip(
-                                    'Semua', _selectedCategory == 'Semua'),
-                                _buildChip('Padi', _selectedCategory == 'Padi'),
-                                _buildChip(
-                                    'Jagung', _selectedCategory == 'Jagung'),
-                                _buildChip(
-                                    'Nutrisi', _selectedCategory == 'Nutrisi'),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          // Tips Grid
-                          _buildTipsGrid(),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
+              ),
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 
-  Widget _buildTipsGrid() {
-    final tips = _filterTips(_allTips);
+  Widget _buildTipsGrid(List<Map<String, dynamic>> allTips) {
+    final tips = _filterTips(allTips);
 
     if (tips.isEmpty) {
       return const Center(
