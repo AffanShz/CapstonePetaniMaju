@@ -8,6 +8,8 @@ import 'package:intl/date_symbol_data_local.dart';
 // Core Services
 import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
+// IMPORT BARU: Background Service
+import 'package:petani_maju/core/services/background_service.dart';
 
 // Datasources
 import 'package:petani_maju/data/datasources/weather_service.dart';
@@ -42,6 +44,14 @@ Future<void> main() async {
 
   // Initialize NotificationService
   await NotificationService().init();
+
+  // TAMBAHAN BARU: Initialize Background Service (WorkManager)
+  // Ini memastikan worker siap menerima perintah
+  await BackgroundService.init();
+
+  // TAMBAHAN BARU: Register Task agar berjalan otomatis
+  // Aplikasi akan mengecek cuaca setiap 15 menit (minimum limit Android)
+  await BackgroundService.registerPeriodicTask();
 
   // Initialize date formatting
   await initializeDateFormatting('id_ID', null);
