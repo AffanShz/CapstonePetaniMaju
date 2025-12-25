@@ -1,0 +1,138 @@
+import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:petani_maju/data/repositories/calendar_repository.dart';
+
+part 'calendar_event.dart';
+part 'calendar_state.dart';
+
+/// BLoC untuk mengelola state halaman Kalender Tanam
+class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
+  final CalendarRepository _calendarRepository;
+
+  CalendarBloc({
+    required CalendarRepository calendarRepository,
+  })  : _calendarRepository = calendarRepository,
+        super(CalendarInitial()) {
+    on<LoadSchedules>(_onLoadSchedules);
+    on<AddSchedule>(_onAddSchedule);
+    on<UpdateSchedule>(_onUpdateSchedule);
+    on<DeleteSchedule>(_onDeleteSchedule);
+    on<SelectDate>(_onSelectDate);
+  }
+
+  /// Handle load schedules
+  Future<void> _onLoadSchedules(
+    LoadSchedules event,
+    Emitter<CalendarState> emit,
+  ) async {
+    emit(CalendarLoading());
+
+    try {
+      final schedules = await _calendarRepository.fetchSchedules();
+      final now = DateTime.now();
+
+      emit(CalendarLoaded(
+        schedules: schedules,
+        selectedDate: now,
+        focusedDate: now,
+      ));
+    } catch (e) {
+      debugPrint('CalendarBloc Error: $e');
+      emit(CalendarError(message: e.toString()));
+    }
+  }
+
+  /// Handle add schedule
+  Future<void> _onAddSchedule(
+    AddSchedule event,
+    Emitter<CalendarState> emit,
+  ) async {
+    try {
+      await _calendarRepository.addSchedule(
+        namaTanaman: event.namaTanaman,
+        tanggalTanam: event.tanggalTanam,
+        catatan: event.catatan,
+      );
+
+      // Reload schedules setelah add
+      final schedules = await _calendarRepository.fetchSchedules();
+
+      final currentState = state;
+      if (currentState is CalendarLoaded) {
+        emit(currentState.copyWith(schedules: schedules));
+      } else {
+        emit(CalendarLoaded(
+          schedules: schedules,
+          selectedDate: DateTime.now(),
+          focusedDate: DateTime.now(),
+        ));
+      }
+    } catch (e) {
+      debugPrint('CalendarBloc Add Error: $e');
+      emit(CalendarError(message: 'Gagal menambah jadwal: $e'));
+    }
+  }
+
+  /// Handle update schedule
+  Future<void> _onUpdateSchedule(
+    UpdateSchedule event,
+    Emitter<CalendarState> emit,
+  ) async {
+    try {
+      await _calendarRepository.updateSchedule(
+        id: event.id,
+        namaTanaman: event.namaTanaman,
+        tanggalTanam: event.tanggalTanam,
+        catatan: event.catatan,
+      );
+
+      // Reload schedules setelah update
+      final schedules = await _calendarRepository.fetchSchedules();
+
+      final currentState = state;
+      if (currentState is CalendarLoaded) {
+        emit(currentState.copyWith(schedules: schedules));
+      }
+    } catch (e) {
+      debugPrint('CalendarBloc Update Error: $e');
+      emit(CalendarError(message: 'Gagal mengupdate jadwal: $e'));
+    }
+  }
+
+  /// Handle delete schedule
+  Future<void> _onDeleteSchedule(
+    DeleteSchedule event,
+    Emitter<CalendarState> emit,
+  ) async {
+    try {
+      await _calendarRepository.deleteSchedule(event.id);
+
+      // Reload schedules setelah delete
+      final schedules = await _calendarRepository.fetchSchedules();
+
+      final currentState = state;
+      if (currentState is CalendarLoaded) {
+        emit(currentState.copyWith(schedules: schedules));
+      }
+    } catch (e) {
+      debugPrint('CalendarBloc Delete Error: $e');
+      emit(CalendarError(message: 'Gagal menghapus jadwal: $e'));
+    }
+  }
+
+  /// Handle select date
+  void _onSelectDate(
+    SelectDate event,
+    Emitter<CalendarState> emit,
+  ) {
+    final currentState = state;
+    if (currentState is CalendarLoaded) {
+      emit(currentState.copyWith(
+        selectedDate: event.date,
+        focusedDate: event.date,
+      ));
+    }
+  }
+}

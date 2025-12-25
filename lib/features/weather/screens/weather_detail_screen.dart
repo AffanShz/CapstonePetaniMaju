@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import 'package:geolocator/geolocator.dart';
 
-import 'package:petani_maju/data/datasources/weather_service.dart';
-import 'package:petani_maju/data/datasources/location_service.dart';
+import 'package:petani_maju/data/repositories/weather_repository.dart';
 import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/utils/weather_utils.dart';
 
@@ -17,9 +16,8 @@ class WeatherDetailScreen extends StatefulWidget {
 }
 
 class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
-  final WeatherService _weatherService = WeatherService();
-  final LocationService _locationService = LocationService();
-  final CacheService _cacheService = CacheService();
+  late final WeatherRepository _weatherRepository;
+  bool _isRepositoryInitialized = false;
 
   bool isLoading = true;
   String errorMessage = "";
@@ -28,57 +26,57 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
   String? detailedLocation;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isRepositoryInitialized) {
+      _weatherRepository = context.read<WeatherRepository>();
+      _loadData();
+      _isRepositoryInitialized = true;
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
-    initializeDateFormatting('id_ID', null).then((_) {
-      _loadData();
-    });
+    // initializeDateFormatting handled in main.dart
   }
 
   Future<void> _loadData() async {
-    // 1. Load from cache first
-    _loadFromCache();
-
-    // 2. Check if offline mode is enabled
-    final offlineMode = _cacheService.getOfflineMode();
+    // 1. Check if offline mode is enabled -> Load from cache
+    final offlineMode = CacheService().getOfflineMode();
     if (offlineMode) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
+      _loadFromCache();
       return;
     }
 
-    // 3. Fetch fresh data (online mode)
+    // 2. Try to load from cache first for immediate display
+    _loadFromCache();
+
+    // 3. Fetch fresh data
     await _fetchWeatherData();
   }
 
   void _loadFromCache() {
-    final cachedWeather = _cacheService.getCachedCurrentWeather();
-    final cachedForecast = _cacheService.getCachedForecast();
-    final cachedLocation = _cacheService.getCachedDetailedLocation();
+    final cachedWeather = CacheService().getCachedCurrentWeather();
+    final cachedForecast = CacheService().getCachedForecast();
+    final cachedLocation = CacheService().getCachedDetailedLocation();
 
-    if (cachedWeather != null) {
-      if (mounted) {
-        setState(() {
-          currentWeather = cachedWeather;
-          forecastList = cachedForecast ?? [];
-          detailedLocation = cachedLocation;
-          isLoading = false;
-        });
-      }
+    if (cachedWeather != null && mounted) {
+      setState(() {
+        currentWeather = cachedWeather;
+        forecastList = cachedForecast ?? [];
+        detailedLocation = cachedLocation;
+        isLoading = false;
+      });
     }
   }
 
   Future<void> _fetchWeatherData() async {
-    if (currentWeather == null) {
-      if (mounted) {
-        setState(() {
-          isLoading = true;
-          errorMessage = "";
-        });
-      }
+    if (currentWeather == null && mounted) {
+      setState(() {
+        isLoading = true;
+        errorMessage = "";
+      });
     }
 
     try {
@@ -86,77 +84,75 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
       double? lon;
 
       // Try to get cached coordinates first
-      final cachedCoords = _cacheService.getCachedCoordinates();
+      final cachedCoords = CacheService().getCachedCoordinates();
       if (cachedCoords != null) {
         lat = cachedCoords['latitude'];
         lon = cachedCoords['longitude'];
       }
 
-      // Try to get current location
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (serviceEnabled) {
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.whileInUse ||
-            permission == LocationPermission.always) {
-          try {
+      // Try to get current location with timeout safety
+      try {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled()
+            .timeout(const Duration(seconds: 5), onTimeout: () => false);
+
+        if (serviceEnabled) {
+          LocationPermission permission = await Geolocator.checkPermission()
+              .timeout(const Duration(seconds: 5),
+                  onTimeout: () => LocationPermission.denied);
+
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission().timeout(
+                const Duration(seconds: 15),
+                onTimeout: () => LocationPermission.denied);
+          }
+
+          if (permission == LocationPermission.whileInUse ||
+              permission == LocationPermission.always) {
             Position position = await Geolocator.getCurrentPosition(
                 locationSettings: const LocationSettings(
                     accuracy: LocationAccuracy.low,
-                    timeLimit: Duration(seconds: 5)));
+                    timeLimit: Duration(seconds: 10)));
             lat = position.latitude;
             lon = position.longitude;
-          } catch (e) {
-            // Use cached or default location
           }
         }
+      } catch (e) {
+        debugPrint("Location error in WeatherDetail: $e");
       }
 
+      // Use Repository to fetch
       final current =
-          await _weatherService.fetchCurrentWeather(lat: lat, lon: lon);
-      final forecast = await _weatherService.fetchForecast(lat: lat, lon: lon);
+          await _weatherRepository.fetchCurrentWeather(lat: lat, lon: lon);
+      final forecast =
+          await _weatherRepository.fetchForecast(lat: lat, lon: lon);
 
       // Get detailed location
       String? locationStr;
       if (lat != null && lon != null) {
-        final locationData =
-            await _locationService.getDetailedLocation(lat, lon);
-        locationStr = locationData['full'];
-
-        if (locationStr != null && locationStr.isNotEmpty) {
-          await _cacheService.saveLocationData(locationStr, lat, lon);
-        }
+        locationStr = await _weatherRepository.fetchDetailedLocation(lat, lon);
       }
-
-      // Save to cache
-      await _cacheService.saveWeatherData(
-        currentWeather: current,
-        forecastList: forecast['list'] ?? [],
-      );
 
       if (mounted) {
         setState(() {
           currentWeather = current;
-          forecastList = forecast['list'] ?? [];
+          forecastList = forecast;
           detailedLocation =
-              locationStr ?? _cacheService.getCachedDetailedLocation();
+              locationStr ?? _weatherRepository.getCachedLocation();
           isLoading = false;
           errorMessage = "";
         });
       }
     } catch (e) {
-      if (currentWeather == null) {
-        if (mounted) {
-          setState(() {
-            errorMessage = "Gagal memuat data cuaca: $e";
-            isLoading = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-        }
+      debugPrint("Weather fetch error: $e");
+      if (currentWeather == null && mounted) {
+        setState(() {
+          errorMessage = "Gagal memuat data cuaca. Periksa koneksi internet.";
+          isLoading = false;
+        });
+      } else if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
       }
     }
   }
@@ -243,7 +239,7 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
   }
 
   String getIconUrl(String iconCode) {
-    return 'https://openweathermap.org/img/wn/$iconCode@2x.png';
+    return 'https://openweathermap.org/img/wn/\$iconCode@2x.png';
   }
 
   @override
@@ -255,7 +251,11 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
+            onPressed: () {
+              if (!CacheService().getOfflineMode()) {
+                _fetchWeatherData();
+              }
+            },
           ),
         ],
       ),
@@ -278,7 +278,11 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
                   ),
                 )
               : RefreshIndicator(
-                  onRefresh: _loadData,
+                  onRefresh: () async {
+                    if (!CacheService().getOfflineMode()) {
+                      await _fetchWeatherData();
+                    }
+                  },
                   child: _buildContent(),
                 ),
     );

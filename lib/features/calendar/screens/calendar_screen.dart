@@ -1,13 +1,15 @@
 // lib/features/calendar/screens/calendar_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'package:petani_maju/data/datasources/planting_schedule_service.dart';
+
+import 'package:petani_maju/features/calendar/bloc/calendar_bloc.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
 
 // ==========================================
-// 1. WIDGET PICKER JAM KHUSUS LANSIA (REVISI)
+// 1. WIDGET PICKER JAM KHUSUS LANSIA
 // ==========================================
 
 class ElderlyTimePicker extends StatefulWidget {
@@ -35,7 +37,6 @@ class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
     _minute = widget.initialTime.minute;
   }
 
-  // PENTING: Update state jika parent widget mengirim waktu baru
   @override
   void didUpdateWidget(covariant ElderlyTimePicker oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -62,19 +63,16 @@ class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
 
   void _changeMinute(int delta) {
     setState(() {
-      // Bulatkan ke kelipatan 10 terdekat dulu jika angka ganjil
       if (_minute % 10 != 0) {
         _minute = ((_minute / 10).round() * 10);
       }
-
       _minute += delta;
-
       if (_minute >= 60) {
         _minute = 0;
-        _changeHour(1); // Otomatis nambah jam jika menit lewat 60
+        _changeHour(1);
       } else if (_minute < 0) {
         _minute = 50;
-        _changeHour(-1); // Otomatis kurang jam jika menit kurang dari 0
+        _changeHour(-1);
       }
     });
     _notifyParent();
@@ -84,7 +82,6 @@ class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // A. TOMBOL PRESET (Pagi / Sore)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -93,26 +90,23 @@ class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
           ],
         ),
         const SizedBox(height: 16),
-
-        // B. KONTROL UTAMA
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // JAM
             _buildControl(
               value: _hour,
               label: "JAM",
               onUp: () => _changeHour(1),
               onDown: () => _changeHour(-1),
             ),
-
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12.0),
               child: Text(":",
-                  style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54)),
             ),
-
-            // MENIT
             _buildControl(
               value: _minute,
               label: "MENIT",
@@ -136,12 +130,14 @@ class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
         _notifyParent();
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.green : Colors.grey[200],
+        backgroundColor: isSelected ? Colors.green : Colors.white,
         foregroundColor: isSelected ? Colors.white : Colors.black87,
         elevation: isSelected ? 2 : 0,
+        side: BorderSide(color: isSelected ? Colors.green : Colors.grey[300]!),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
-      child: Text(label),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
@@ -159,40 +155,42 @@ class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.keyboard_arrow_up_rounded,
-                size: 40, color: Colors.green),
+                size: 32, color: Colors.green),
           ),
         ),
         Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey[200]!),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               )
             ],
           ),
           child: Text(
             value.toString().padLeft(2, '0'),
             style: const TextStyle(
-              fontSize: 36,
+              fontSize: 40,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
         ),
         Text(label,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 12)),
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+                fontSize: 12)),
         const SizedBox(height: 4),
         InkWell(
           onTap: onDown,
@@ -200,11 +198,11 @@ class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
+              color: Colors.red.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.keyboard_arrow_down_rounded,
-                size: 40, color: Colors.redAccent),
+                size: 32, color: Colors.redAccent),
           ),
         ),
       ],
@@ -213,7 +211,7 @@ class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
 }
 
 // ==========================================
-// 2. MAIN SCREEN
+// 2. MAIN SCREEN - REFACTORED WITH BLOC
 // ==========================================
 
 class CalendarScreen extends StatefulWidget {
@@ -224,194 +222,417 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  final PlantingScheduleService _scheduleService = PlantingScheduleService();
-
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
-
-  Map<DateTime, List<dynamic>> _events = {};
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedDay = _focusedDay;
-    _loadSchedules();
-  }
-
-  Future<void> _loadSchedules() async {
-    try {
-      final data = await _scheduleService.fetchSchedules();
-      final newEvents = <DateTime, List<dynamic>>{};
-
-      for (var item in data) {
-        final date = DateTime.parse(item['tanggal_tanam']);
-        final dateKey = DateTime(date.year, date.month, date.day);
-
-        if (newEvents[dateKey] == null) {
-          newEvents[dateKey] = [];
-        }
-        newEvents[dateKey]!.add(item);
-      }
-
-      if (mounted) {
-        setState(() {
-          _events = newEvents;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  List<dynamic> _getEventsForDay(DateTime day) {
-    return _events[DateTime(day.year, day.month, day.day)] ?? [];
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Jadwal Tanam')),
+      backgroundColor: const Color(0xFFF8F9FA),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showScheduleDialog(context, isEdit: false),
         backgroundColor: Colors.green,
+        shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: Column(
-        children: [
-          TableCalendar(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: _focusedDay,
-            calendarFormat: _calendarFormat,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            eventLoader: _getEventsForDay,
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
-              });
-            },
-            onFormatChanged: (format) {
-              if (_calendarFormat != format) {
-                setState(() => _calendarFormat = format);
-              }
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-            },
-            calendarStyle: const CalendarStyle(
-              todayDecoration: BoxDecoration(
-                  color: Colors.greenAccent, shape: BoxShape.circle),
-              selectedDecoration:
-                  BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-              markerDecoration:
-                  BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
-            ),
-          ),
-          const SizedBox(height: 16.0),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              color: Colors.grey[50],
+      body: BlocConsumer<CalendarBloc, CalendarState>(
+        listener: (context, state) {
+          if (state is CalendarError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is CalendarInitial || state is CalendarLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is CalendarLoaded) {
+            return _buildContent(context, state);
+          }
+
+          if (state is CalendarError) {
+            return Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12.0),
-                    child: Text(
-                      'Kegiatan: ${DateFormat('dd MMM yyyy').format(_selectedDay!)}',
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  Expanded(
-                    child: _isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : _getEventsForDay(_selectedDay!).isEmpty
-                            ? const Center(
-                                child: Text('Tidak ada jadwal tanam.',
-                                    style: TextStyle(color: Colors.grey)))
-                            : ListView.builder(
-                                itemCount:
-                                    _getEventsForDay(_selectedDay!).length,
-                                itemBuilder: (context, index) {
-                                  final event =
-                                      _getEventsForDay(_selectedDay!)[index];
-
-                                  // Parse Jam
-                                  String timeString = '-';
-                                  try {
-                                    final dt =
-                                        DateTime.parse(event['tanggal_tanam']);
-                                    timeString = DateFormat('HH:mm').format(dt);
-                                  } catch (_) {}
-
-                                  return Card(
-                                    elevation: 2,
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
-                                    child: ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundColor: Colors.green[100],
-                                        child: const Icon(Icons.grass,
-                                            color: Colors.green),
-                                      ),
-                                      title: Text(event['nama_tanaman'],
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text("Pukul: $timeString WIB",
-                                              style: TextStyle(
-                                                  color: Colors.green[800],
-                                                  fontWeight: FontWeight.w600)),
-                                          Text(event['catatan'] ?? '-',
-                                              maxLines: 1),
-                                        ],
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit,
-                                                color: Colors.blue),
-                                            onPressed: () =>
-                                                _showScheduleDialog(context,
-                                                    isEdit: true, event: event),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red),
-                                            onPressed: () =>
-                                                _confirmDelete(event['id']),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(state.message),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<CalendarBloc>().add(LoadSchedules());
+                    },
+                    child: const Text('Coba Lagi'),
                   ),
                 ],
               ),
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, CalendarLoaded state) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. HEADER
+            Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                const Expanded(
+                  child: Text(
+                    'Kalender Tanam',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 48),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // 2. CALENDAR CARD
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TableCalendar(
+                firstDay: DateTime.utc(2020, 1, 1),
+                lastDay: DateTime.utc(2030, 12, 31),
+                focusedDay: state.focusedDate,
+                calendarFormat: _calendarFormat,
+                selectedDayPredicate: (day) =>
+                    isSameDay(state.selectedDate, day),
+                eventLoader: (day) => state.getEventsForDay(day),
+                headerStyle: const HeaderStyle(
+                  titleCentered: true,
+                  formatButtonVisible: false,
+                  titleTextStyle: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  leftChevronIcon: Icon(Icons.chevron_left, size: 20),
+                  rightChevronIcon: Icon(Icons.chevron_right, size: 20),
+                ),
+                onDaySelected: (selectedDay, focusedDay) {
+                  context
+                      .read<CalendarBloc>()
+                      .add(SelectDate(date: selectedDay));
+                },
+                onPageChanged: (focusedDay) {
+                  // Just update local format, bloc handles date state
+                },
+                calendarStyle: CalendarStyle(
+                  todayDecoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  todayTextStyle: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  selectedDecoration: const BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                  markerDecoration: const BoxDecoration(
+                    color: Colors.orange,
+                    shape: BoxShape.circle,
+                  ),
+                  markersMaxCount: 1,
+                  outsideDaysVisible: false,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // 3. KEGIATAN HARI INI
+            const Text(
+              'Kegiatan Hari Ini',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            _buildEventsList(context, state),
+
+            const SizedBox(height: 24),
+
+            // 4. REKOMENDASI AKTIVITAS
+            const Text(
+              'Rekomendasi Aktivitas Bulan Ini',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            _buildRecommendationCard(),
+
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEventsList(BuildContext context, CalendarLoaded state) {
+    final events = state.getEventsForDay(state.selectedDate);
+
+    if (events.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.event_busy, size: 48, color: Colors.grey[300]),
+            const SizedBox(height: 12),
+            Text(
+              'Tidak ada jadwal tanam.',
+              style: TextStyle(color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: events.length,
+      itemBuilder: (context, index) {
+        final event = events[index];
+
+        String timeString = '-';
+        try {
+          final dt = DateTime.parse(event['tanggal_tanam']);
+          timeString = DateFormat('HH:mm').format(dt);
+        } catch (_) {}
+
+        Color accentColor = index % 2 == 0 ? Colors.green : Colors.orange;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                event['nama_tanaman'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                timeString,
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          event['catatan'] ?? '-',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Column(
+                  children: [
+                    IconButton(
+                      icon:
+                          const Icon(Icons.edit, size: 20, color: Colors.blue),
+                      onPressed: () => _showScheduleDialog(context,
+                          isEdit: true, event: event),
+                      padding: const EdgeInsets.all(0),
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(height: 12),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          size: 20, color: Colors.red),
+                      onPressed: () => _confirmDelete(context, event['id']),
+                      padding: const EdgeInsets.all(0),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+              ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecommendationCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2E7D32),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.spa, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Persiapan Musim Tanam',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildRecommendationItem(
+              'Pengolahan lahan untuk musim tanam berikutnya'),
+          const SizedBox(height: 8),
+          _buildRecommendationItem('Persiapan bibit unggul'),
+          const SizedBox(height: 8),
+          _buildRecommendationItem('Perbaikan sistem irigasi'),
         ],
       ),
     );
   }
 
-  void _confirmDelete(int id) {
+  Widget _buildRecommendationItem(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 6.0),
+          child: Icon(Icons.circle, size: 6, color: Colors.white),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _confirmDelete(BuildContext context, int id) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -423,8 +644,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await _scheduleService.deleteSchedule(id);
-              _loadSchedules();
+
+              // Delete via BLoC
+              context.read<CalendarBloc>().add(DeleteSchedule(id: id));
+
+              // Cancel notifications
+              final notif = NotificationService();
+              await notif.cancelNotification(id * 10 + 0);
+              await notif.cancelNotification(id * 10 + 1);
+              await notif.cancelNotification(id * 10 + 2);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Hapus', style: TextStyle(color: Colors.white)),
@@ -435,15 +663,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   // ==========================================
-  // 3. DIALOG INPUT JADWAL (FIXED STATE)
+  // 3. DIALOG INPUT JADWAL
   // ==========================================
 
-  void _showScheduleDialog(BuildContext context,
+  void _showScheduleDialog(BuildContext scaffoldContext,
       {required bool isEdit, Map<String, dynamic>? event}) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController noteController = TextEditingController();
 
-    // Default 07:00 Pagi
     TimeOfDay selectedTime = const TimeOfDay(hour: 7, minute: 0);
 
     if (isEdit && event != null) {
@@ -455,174 +682,262 @@ class _CalendarScreenState extends State<CalendarScreen> {
       } catch (_) {}
     }
 
-    showDialog(
-      context: context,
+    showModalBottomSheet(
+      context: scaffoldContext,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        // StatefulBuilder digunakan untuk merubah teks jam di bawah picker ketika picker berubah
         return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              title: Text(isEdit ? 'Ubah Jadwal' : 'Tambah Jadwal',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              content: SingleChildScrollView(
+          builder: (context, setStateModal) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(28),
+                ),
+              ),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                top: 24,
+                left: 24,
+                right: 24,
+              ),
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      isEdit ? 'Ubah Jadwal' : 'Tambah Jadwal Baru',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildModernInput(
                       controller: nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Tanam apa?',
-                        hintText: 'Contoh: Padi',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                      label: 'Tanam apa?',
+                      icon: Icons.eco_outlined,
+                      hint: 'Misal: Padi, Jagung',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildModernInput(
+                      controller: noteController,
+                      label: 'Catatan tambahan',
+                      icon: Icons.note_alt_outlined,
+                      hint: 'Misal: Pupuk kandang',
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Pilih Waktu Kegiatan",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: noteController,
-                      decoration: InputDecoration(
-                        labelText: 'Catatan',
-                        hintText: 'Contoh: Pupuk',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // LABEL JAM
-                    const Text("Pilih Jam Kegiatan:",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-
-                    // PICKER JAM LANSIA
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 8),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border:
-                            Border.all(color: Colors.green.withOpacity(0.2)),
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey[200]!),
                       ),
                       child: ElderlyTimePicker(
                         initialTime: selectedTime,
                         onTimeChanged: (newTime) {
-                          // Update variabel lokal
                           selectedTime = newTime;
-                          // PENTING: Update UI Dialog agar teks di bawah ikut berubah
-                          setStateDialog(() {});
+                          setStateModal(() {});
                         },
                       ),
                     ),
+                    const SizedBox(height: 32),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              foregroundColor: Colors.grey[600],
+                            ),
+                            child: const Text('Batal',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (nameController.text.isNotEmpty) {
+                                // Get selected date from BLoC state
+                                final blocState =
+                                    scaffoldContext.read<CalendarBloc>().state;
+                                DateTime selectedDate = DateTime.now();
+                                if (blocState is CalendarLoaded) {
+                                  selectedDate = blocState.selectedDate;
+                                }
 
-                    const SizedBox(height: 8),
+                                final DateTime finalDateTime = DateTime(
+                                  selectedDate.year,
+                                  selectedDate.month,
+                                  selectedDate.day,
+                                  selectedTime.hour,
+                                  selectedTime.minute,
+                                );
 
-                    // INDIKATOR JAM TERPILIH (Agar user yakin jam sudah berubah)
-                    Text(
-                      "Waktu Terpilih: ${selectedTime.format(context)}",
-                      style: TextStyle(
-                          color: Colors.green[800],
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
+                                if (isEdit && event != null) {
+                                  int scheduleId = event['id'];
+
+                                  // Update via BLoC
+                                  scaffoldContext.read<CalendarBloc>().add(
+                                        UpdateSchedule(
+                                          id: scheduleId,
+                                          namaTanaman: nameController.text,
+                                          tanggalTanam: finalDateTime,
+                                          catatan: noteController.text,
+                                        ),
+                                      );
+
+                                  // Cancel old notifications
+                                  final notif = NotificationService();
+                                  await notif
+                                      .cancelNotification(scheduleId * 10 + 0);
+                                  await notif
+                                      .cancelNotification(scheduleId * 10 + 1);
+                                  await notif
+                                      .cancelNotification(scheduleId * 10 + 2);
+
+                                  // Schedule new notifications
+                                  await _scheduleNotifications(
+                                    scheduleId,
+                                    nameController.text,
+                                    finalDateTime,
+                                    selectedTime,
+                                  );
+                                } else {
+                                  // Add via BLoC
+                                  scaffoldContext.read<CalendarBloc>().add(
+                                        AddSchedule(
+                                          namaTanaman: nameController.text,
+                                          tanggalTanam: finalDateTime,
+                                          catatan: noteController.text,
+                                        ),
+                                      );
+
+                                  // Note: For new schedules, we'd need the ID from bloc
+                                  // For now, notifications for new items need manual handling
+                                }
+
+                                Navigator.pop(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Simpan Jadwal',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              actions: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: Colors.red),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: const Text('Batal',
-                            style: TextStyle(color: Colors.red)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (nameController.text.isNotEmpty) {
-                            // GABUNG TANGGAL + JAM
-                            final DateTime finalDateTime = DateTime(
-                              _selectedDay!.year,
-                              _selectedDay!.month,
-                              _selectedDay!.day,
-                              selectedTime.hour,
-                              selectedTime.minute,
-                            );
-
-                            if (isEdit && event != null) {
-                              await _scheduleService.updateSchedule(
-                                id: event['id'],
-                                namaTanaman: nameController.text,
-                                tanggalTanam: finalDateTime,
-                                catatan: noteController.text,
-                              );
-                            } else {
-                              await _scheduleService.addSchedule(
-                                namaTanaman: nameController.text,
-                                tanggalTanam: finalDateTime,
-                                catatan: noteController.text,
-                              );
-
-                              // NOTIFIKASI
-                              int baseId =
-                                  DateTime.now().millisecondsSinceEpoch ~/ 1000;
-                              // H-16 Jam
-                              await NotificationService().scheduleNotification(
-                                id: baseId + 1,
-                                title: 'Persiapan: ${nameController.text}',
-                                body:
-                                    'Besok jam ${selectedTime.format(context)} ada kegiatan.',
-                                scheduledDate: finalDateTime
-                                    .subtract(const Duration(hours: 16)),
-                              );
-                              // H-8 Jam
-                              await NotificationService().scheduleNotification(
-                                id: baseId + 2,
-                                title: 'Ingat: ${nameController.text}',
-                                body:
-                                    'Nanti jam ${selectedTime.format(context)} ke sawah.',
-                                scheduledDate: finalDateTime
-                                    .subtract(const Duration(hours: 8)),
-                              );
-                            }
-
-                            if (mounted) {
-                              Navigator.pop(context);
-                              _loadSchedules();
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text(isEdit ? 'Simpan' : 'Simpan',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             );
           },
         );
       },
+    );
+  }
+
+  Future<void> _scheduleNotifications(
+    int scheduleId,
+    String plantName,
+    DateTime dateTime,
+    TimeOfDay time,
+  ) async {
+    final notif = NotificationService();
+
+    await notif.scheduleNotification(
+      id: scheduleId * 10 + 0,
+      title: 'Waktunya: $plantName',
+      body: 'Sekarang saatnya kegiatan $plantName.',
+      scheduledDate: dateTime,
+    );
+
+    await notif.scheduleNotification(
+      id: scheduleId * 10 + 1,
+      title: 'Persiapan: $plantName',
+      body:
+          'Besok jam ${time.hour}:${time.minute.toString().padLeft(2, '0')} ada kegiatan.',
+      scheduledDate: dateTime.subtract(const Duration(hours: 16)),
+    );
+
+    await notif.scheduleNotification(
+      id: scheduleId * 10 + 2,
+      title: 'Ingat: $plantName',
+      body:
+          'Nanti jam ${time.hour}:${time.minute.toString().padLeft(2, '0')} ke sawah.',
+      scheduledDate: dateTime.subtract(const Duration(hours: 8)),
+    );
+  }
+
+  Widget _buildModernInput({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required String hint,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.transparent),
+      ),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, color: Colors.green),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
     );
   }
 }

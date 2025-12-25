@@ -21,7 +21,10 @@ class CacheService {
     await Hive.openBox(_tipsBoxName);
     await Hive.openBox(_locationBoxName);
     await Hive.openBox(_settingsBoxName);
+    await Hive.openBox(_plantingScheduleBoxName);
   }
+
+  static const String _plantingScheduleBoxName = 'plantingSchedule';
 
   // ==================== WEATHER CACHE ====================
 
