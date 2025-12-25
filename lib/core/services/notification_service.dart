@@ -181,11 +181,13 @@ class NotificationService {
         // Jika selisihnya kurang dari 5 menit, anggap user ingin test "sekarang"
         if (now.difference(finalScheduledDate).inMinutes < 5) {
           finalScheduledDate = now.add(const Duration(seconds: 2));
-          if (kDebugMode)
+          if (kDebugMode) {
             print("Waktu lewat, dijadwalkan ulang ke 2 detik lagi.");
+          }
         } else {
-          if (kDebugMode)
+          if (kDebugMode) {
             print("Waktu jadwal $title sudah berlalu lama, skip notifikasi.");
+          }
           return;
         }
       }
