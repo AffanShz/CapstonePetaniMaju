@@ -8,7 +8,6 @@ import 'package:intl/date_symbol_data_local.dart';
 // Core Services
 import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
-// IMPORT BARU: Background Service
 import 'package:petani_maju/core/services/background_service.dart';
 
 // Datasources
@@ -30,33 +29,22 @@ import 'package:petani_maju/logic/app_lifecycle/app_bloc.dart';
 // UI
 import 'package:petani_maju/widgets/navbaar.dart';
 
-// Global flag to track if app started offline
 bool appStartedOffline = false;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
   await dotenv.load(fileName: ".env");
 
-  // Initialize Hive for local caching
   await CacheService.init();
-
-  // Initialize NotificationService
   await NotificationService().init();
 
-  // TAMBAHAN BARU: Initialize Background Service (WorkManager)
-  // Ini memastikan worker siap menerima perintah
+  // Inisialisasi Background Service & Task
   await BackgroundService.init();
-
-  // TAMBAHAN BARU: Register Task agar berjalan otomatis
-  // Aplikasi akan mengecek cuaca setiap 15 menit (minimum limit Android)
   await BackgroundService.registerPeriodicTask();
 
-  // Initialize date formatting
   await initializeDateFormatting('id_ID', null);
 
-  // Initialize Supabase with timeout to prevent hanging when offline
   try {
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_URL']!,
@@ -81,7 +69,6 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Create singleton instances of services
     final cacheService = CacheService();
     final weatherService = WeatherService();
     final locationService = LocationService();
@@ -91,7 +78,6 @@ class MainApp extends StatelessWidget {
 
     return MultiRepositoryProvider(
       providers: [
-        // Repositories
         RepositoryProvider<WeatherRepository>(
           create: (_) => WeatherRepository(
             weatherService: weatherService,
@@ -119,7 +105,6 @@ class MainApp extends StatelessWidget {
       ],
       child: MultiBlocProvider(
         providers: [
-          // Global AppBloc
           BlocProvider<AppBloc>(
             create: (context) => AppBloc(
               cacheService: cacheService,
@@ -136,7 +121,6 @@ class MainApp extends StatelessWidget {
           ),
           home: BlocListener<AppBloc, AppState>(
             listener: (context, state) {
-              // Show offline message when app starts offline
               if (state is AppReady && !state.isConnected) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
