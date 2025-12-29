@@ -244,6 +244,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             );
           }
+
+          // Handle notification scheduling when new schedule is added
+          if (state is CalendarScheduleAdded) {
+            final time = TimeOfDay(
+              hour: state.tanggalTanam.hour,
+              minute: state.tanggalTanam.minute,
+            );
+            _scheduleNotifications(
+              state.newScheduleId,
+              state.namaTanaman,
+              state.tanggalTanam,
+              time,
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Jadwal berhasil ditambah dengan pengingat!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         },
         builder: (context, state) {
           if (state is CalendarInitial || state is CalendarLoading) {
@@ -252,6 +272,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
           if (state is CalendarLoaded) {
             return _buildContent(context, state);
+          }
+
+          // Also render for CalendarScheduleAdded (it has schedules data)
+          if (state is CalendarScheduleAdded) {
+            // Convert to CalendarLoaded for rendering
+            final loadedState = CalendarLoaded(
+              schedules: state.schedules,
+              selectedDate: state.selectedDate,
+              focusedDate: state.focusedDate,
+            );
+            return _buildContent(context, loadedState);
           }
 
           if (state is CalendarError) {
@@ -288,38 +319,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. HEADER
-            Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+            const Center(
+              child: Text(
+                'Kalender Tanam',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
-                const Expanded(
-                  child: Text(
-                    'Kalender Tanam',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 48),
-              ],
+              ),
             ),
             const SizedBox(height: 24),
 
