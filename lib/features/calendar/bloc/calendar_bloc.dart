@@ -50,7 +50,8 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     Emitter<CalendarState> emit,
   ) async {
     try {
-      await _calendarRepository.addSchedule(
+      // Get ID from repository
+      final newId = await _calendarRepository.addSchedule(
         namaTanaman: event.namaTanaman,
         tanggalTanam: event.tanggalTanam,
         catatan: event.catatan,
@@ -60,15 +61,22 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final schedules = await _calendarRepository.fetchSchedules();
 
       final currentState = state;
-      if (currentState is CalendarLoaded) {
-        emit(currentState.copyWith(schedules: schedules));
-      } else {
-        emit(CalendarLoaded(
-          schedules: schedules,
-          selectedDate: DateTime.now(),
-          focusedDate: DateTime.now(),
-        ));
-      }
+      final selectedDate = currentState is CalendarLoaded
+          ? currentState.selectedDate
+          : DateTime.now();
+      final focusedDate = currentState is CalendarLoaded
+          ? currentState.focusedDate
+          : DateTime.now();
+
+      // Emit state dengan ID baru untuk notification scheduling
+      emit(CalendarScheduleAdded(
+        newScheduleId: newId,
+        namaTanaman: event.namaTanaman,
+        tanggalTanam: event.tanggalTanam,
+        schedules: schedules,
+        selectedDate: selectedDate,
+        focusedDate: focusedDate,
+      ));
     } catch (e) {
       debugPrint('CalendarBloc Add Error: $e');
       emit(CalendarError(message: 'Gagal menambah jadwal: $e'));

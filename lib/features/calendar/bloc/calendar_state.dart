@@ -67,6 +67,29 @@ class CalendarOperationSuccess extends CalendarState {
   List<Object?> get props => [message];
 }
 
+/// State saat jadwal baru berhasil ditambahkan (dengan ID untuk notifikasi)
+class CalendarScheduleAdded extends CalendarState {
+  final int newScheduleId;
+  final String namaTanaman;
+  final DateTime tanggalTanam;
+  final List<Map<String, dynamic>> schedules;
+  final DateTime selectedDate;
+  final DateTime focusedDate;
+
+  const CalendarScheduleAdded({
+    required this.newScheduleId,
+    required this.namaTanaman,
+    required this.tanggalTanam,
+    required this.schedules,
+    required this.selectedDate,
+    required this.focusedDate,
+  });
+
+  @override
+  List<Object?> get props =>
+      [newScheduleId, namaTanaman, tanggalTanam, schedules];
+}
+
 /// State saat terjadi error
 class CalendarError extends CalendarState {
   final String message;
