@@ -1,133 +1,145 @@
 # 🌾 Petani Maju
 
-Aplikasi mobile untuk membantu petani Indonesia dengan informasi cuaca, tips pertanian, dan kalender tanam.
+Aplikasi mobile pintar untuk membantu petani Indonesia dengan informasi cuaca real-time, tips pertanian, kalender tanam, dan sistem peringatan dini berbasis cuaca.
 
-## 📚 Dokumentasi
+## 📚 Dokumentasi Utama
 
 | Dokumen | Deskripsi |
 |---------|-----------|
-| [📖 DOCS.md](./DOCS.md) | Dokumentasi teknis lengkap |
-| [🔌 API.md](./API.md) | Dokumentasi API dan endpoints |
-| [🤝 CONTRIBUTING.md](./CONTRIBUTING.md) | Panduan kontribusi |
-| [📋 CHANGELOG.md](./CHANGELOG.md) | Log perubahan versi |
+| [📖 DOCS.md](./DOCS.md) | Dokumentasi teknis & arsitektur lengkap |
+| [🔌 API.md](./API.md) | Dokumentasi integrasi API (Supabase & OpenWeather) |
+| [🤝 CONTRIBUTING.md](./CONTRIBUTING.md) | Panduan kontribusi developer |
+| [📋 CHANGELOG.md](./CHANGELOG.md) | Riwayat perubahan versi |
 
-## 📱 Fitur Utama
+## 🚀 Fitur Utama
 
-### 🌤️ Cuaca
-- **Cuaca Real-time** - Data cuaca terkini dari lokasi pengguna
-- **Prediksi 4 Jam** - Forecast cuaca per 4 jam dengan hari dan tanggal
-- **Lokasi Detail** - Menampilkan Desa, Kecamatan, Kabupaten, Provinsi
-- **Tema Dinamis** - Warna berubah sesuai kondisi cuaca (cerah, hujan, berawan, dll)
-- **Peringatan Hujan** - Notifikasi otomatis jika diprediksi hujan dalam 24 jam
+### 🌤️ Sistem Cuaca Cerdas
+- **Real-time Weather**: Data akurat dari OpenWeatherMap.
+- **Prediksi Per Jam**: Prakiraan cuaca detail untuk 24 jam ke depan.
+- **Weather Alerts**: Notifikasi otomatis saat ada potensi **Hujan Deras**, **Angin Kencang**, atau **Badai Petir**.
+- **Analisis Risiko Hama**: Deteksi potensi serangan hama berdasarkan suhu dan kelembaban.
 
-### 📚 Tips Pertanian
-- **Tips dari Database** - Konten tips dari Supabase backend
-- **Kategori Filter** - Filter berdasarkan kategori (Padi, Jagung, Nutrisi, dll)
-- **Detail Tips** - Halaman detail dengan gambar dan konten lengkap
+### 🔔 Notifikasi Pintar (Background System)
+- **Morning Briefing**: Sapaan pagi dengan ringkasan cuaca hari ini (06:00).
+- **Smart Calendar**: Pengingat jadwal tanam/pupuk (H-1, H-1 Jam, dan Hari H).
+- **Quiet Mode**: Mode "Tenang" otomatis di malam hari (22:00 - 05:00) agar istirahat tidak terganggu.
+- **Offline Support**: Notifikasi tetap berjalan meski aplikasi ditutup (menggunakan `Workmanager` & `AlarmManager`).
 
-### 📅 Kalender Tanam
-- Kalender untuk perencanaan aktivitas pertanian
+### 📅 Kalender Tanam Digital
+- **Manajemen Jadwal**: Tambah, Edit, Hapus jadwal kegiatan tani.
+- **Sinkronisasi Notifikasi**: Jadwal yang diedit otomatis memperbarui alarm notifikasi.
+- **Rekomendasi Bulanan**: Saran aktivitas pertanian berdasarkan bulan berjalan.
 
-### 🐛 Hama & Penyakit
-- Informasi tentang hama dan penyakit tanaman
+### 📚 Tips & Edukasi
+- **Konten Terkurasi**: Tips budidaya Padi, Jagung, dan Nutrisi Tanaman.
+- **Offline Cache**: Artikel tersimpan lokal, baca kapan saja tanpa internet.
 
-### 💾 Offline Support
-- **Hive Local Caching** - Data tersimpan lokal untuk akses offline
-- **Cache-first Loading** - Tampilkan data cache dulu, fetch API di background
-- **Graceful Fallback** - Tetap berfungsi saat tidak ada internet
+## 🛠️ Tech Stack & Architecture
 
-## 🛠️ Tech Stack
+Aplikasi ini dibangun dengan **Clean Architecture** dan **BLoC Pattern** untuk skalabilitas maksimal.
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Flutter 3.x |
-| State Management | StatefulWidget |
-| Backend | Supabase |
-| Weather API | OpenWeatherMap |
-| Geocoding | OpenStreetMap Nominatim |
-| Local Storage | Hive |
-| Location | Geolocator |
+| **Language** | Dart (Flutter 3.x) |
+| **State Management** | **Flutter BLoC** (Business Logic Component) |
+| **Architecture** | Feature-First (Data, Domain, Presentation) |
+| **Backend** | Supabase (PostgreSQL, Auth, Storage) |
+| **Weather API** | OpenWeatherMap |
+| **Local Storage** | Hive (NoSQL Database) |
+| **Background Service** | Workmanager & Android Alarm Manager |
+| **Notifications** | Flutter Local Notifications |
 
-## 📦 Dependencies
+## 📦 Dependencies Utama
 
 ```yaml
 dependencies:
-  flutter: sdk
-  geolocator: ^14.0.2
+  flutter_bloc: ^8.1.3
+  equatable: ^2.0.5
+  supabase_flutter: ^2.0.0
   hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  workmanager: ^0.5.2
+  flutter_local_notifications: ^18.0.1
+  geolocator: ^14.0.2
   http: ^1.6.0
   intl: ^0.20.2
-  permission_handler: ^12.0.1
-  supabase_flutter: ^2.0.0
+  table_calendar: ^3.1.2
 ```
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Flutter SDK >= 3.0.0
-- Android Studio / VS Code
-- Android Emulator atau iOS Simulator
-
-### Installation
-
-1. Clone repository
-```bash
-git clone https://github.com/AffanShz/CapstonePetaniMaju.git
-cd petani_maju
-```
-
-2. Install dependencies
-```bash
-flutter pub get
-```
-
-3. Run aplikasi
-```bash
-flutter run
-```
-
-## 📁 Project Structure
+## 📂 Struktur Project (Feature-First)
 
 ```
 lib/
-├── data/
-│   └── datasources/
-│       ├── cache_service.dart    # Hive local caching
-│       ├── location_service.dart # Reverse geocoding
-│       ├── tips_services.dart    # Supabase tips API
-│       └── weather_service.dart  # OpenWeatherMap API
-├── features/
-│   ├── calendar/                 # Kalender tanam
-│   ├── home/                     # Home screen & widgets
-│   ├── pests/                    # Hama & penyakit
-│   ├── tips/                     # Tips pertanian
-│   └── weather/                  # Detail cuaca
-├── utils/
-│   └── weather_utils.dart        # Weather translation
-├── widgets/                      # Reusable widgets
-└── main.dart                     # App entry point
+├── core/                   # Shared logic & services
+│   ├── services/           # Background, Notification, Cache
+│   ├── constants/          # Colors, API Keys
+│   └── theme/              # App Themes
+├── data/                   # Data Layer
+│   ├── datasources/        # API calls & Local DB
+│   ├── repositories/       # Data mediation logic
+│   └── models/             # Data classes
+├── features/               # Feature Modules
+│   ├── home/               # HomeLogic, BLoC, UI
+│   ├── calendar/           # CalendarLogic, BLoC, UI
+│   ├── tips/               # TipsLogic, BLoC, UI
+│   ├── weather/            # WeatherUI
+│   └── settings/           # SettingsUI & Logic
+├── widgets/                # Reusable global widgets
+└── main.dart               # Entry point & DI Setup
 ```
 
-## 🔄 Caching Flow
+## 🚀 Cara Menjalankan
+
+### Persyaratan
+- Flutter SDK >= 3.0.0
+- Device/Emulator Android (Min SDK 21)
+
+### Langkah Instalasi
+
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/AffanShz/CapstonePetaniMaju.git
+   cd petani_maju
+   ```
+
+2. **Setup Environment Variable**
+   Buat file `.env` di root folder dan isi kredensial:
+   ```env
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_supabase_anon_key
+   OPENWEATHER_API_KEY=your_openweather_api_key
+   ```
+
+3. **Install Dependencies**
+   ```bash
+   flutter pub get
+   ```
+
+4. **Jalankan Aplikasi**
+   ```bash
+   flutter run
+   ```
+
+## 🔄 Alur Caching (Offline First)
 
 ```
-App Dibuka
-    ↓
-Load dari Hive Cache (instant)
-    ↓
-Tampilkan data cached
-    ↓
-Fetch API (background)
-    ↓
-Berhasil? → Update cache + UI
-Gagal? → Tetap tampilkan cached data
+User Membuka Fitur
+       │
+[Cek Koneksi Internet]
+       │
+   ┌───▼───┐
+   │       │
+(Online) (Offline)
+   │       │
+Load API   Load Hive Cache
+   │       │
+Simpan ke  Tampilkan Data
+ Cache     (Snackbar: "Mode Offline")
+   │
+Update UI
 ```
 
-## 👥 Team
+## 🤝 Team
+- **Affan** - Mobile Development (Flutter)
 
-- Capstone Project Team
-
-## 📄 License
-
-This project is for educational purposes.
+---
+*Dibuat dengan ❤️ untuk kemajuan pertanian Indonesia.*
