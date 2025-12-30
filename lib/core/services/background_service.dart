@@ -1,55 +1,49 @@
-import 'dart:async';
 import 'package:workmanager/workmanager.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:petani_maju/core/services/notification_scheduler.dart';
+import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
 import 'package:petani_maju/data/datasources/weather_service.dart';
-import 'package:petani_maju/core/services/cache_service.dart';
-import 'package:petani_maju/utils/weather_utils.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter/foundation.dart';
 
-const String simplePeriodicTask = "simplePeriodicTask";
-const String weatherCheckTask = "weatherCheckTask";
+// Task names
+const String weatherCheckTask = "checkWeatherCondition";
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    try {
-      await dotenv.load(fileName: ".env");
+    if (kDebugMode) print("🔄 Background Task Started: $task");
 
-      await CacheService.init();
-      final cacheService = CacheService();
+    if (task == weatherCheckTask) {
+      try {
+        // Initialize dependencies for background isolate
+        await CacheService.init();
+        await NotificationService().init();
 
-      final notificationService = NotificationService();
-      await notificationService.init();
+        // Get current position directly
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+          ),
+        );
 
-      if (task == weatherCheckTask) {
         final weatherService = WeatherService();
-        final cachedCoords = cacheService.getCachedCoordinates();
-
         final weatherData = await weatherService.fetchCurrentWeather(
-            lat: cachedCoords?['latitude'], lon: cachedCoords?['longitude']);
+            lat: position.latitude, lon: position.longitude);
 
-        if (weatherData.isNotEmpty && weatherData['weather'] != null) {
-          final conditionId = weatherData['weather'][0]['id'] as int;
-          final cityName = weatherData['name'] ?? 'Lokasi Anda';
+        final scheduler = NotificationScheduler();
 
-          final recommendation = WeatherUtils.getRecommendation(conditionId);
+        // Check for alerts based on new weather data
+        await scheduler.checkWeatherAlerts(weatherData);
+        await scheduler.updateRainStatus(weatherData);
+        await scheduler.checkPestRisk(weatherData);
 
-          final bool shouldNotify = (conditionId < 700) ||
-              (conditionId == 800) ||
-              (conditionId == 804);
-
-          if (shouldNotify && recommendation != null) {
-            await notificationService.showNotification(
-              id: 999,
-              title: "PERINGATAN CUACA di $cityName!",
-              body: recommendation,
-              payload: 'weather_alert',
-            );
-          }
-        }
+        // Ensure morning briefing is scheduled for next day with latest data
+        await scheduler.scheduleMorningBriefing();
+      } catch (e) {
+        if (kDebugMode) print("❌ Background Task Failed: $e");
+        return Future.value(false);
       }
-    } catch (_) {
-      return Future.value(true);
     }
 
     return Future.value(true);
@@ -57,21 +51,27 @@ void callbackDispatcher() {
 }
 
 class BackgroundService {
-  static Future<void> init() async {
-    await Workmanager().initialize(callbackDispatcher);
-  }
+  static final BackgroundService _instance = BackgroundService._internal();
+  factory BackgroundService() => _instance;
+  BackgroundService._internal();
 
-  static Future<void> registerPeriodicTask() async {
-    await Workmanager().cancelAll();
-    await Workmanager().registerPeriodicTask(
-      simplePeriodicTask,
-      weatherCheckTask,
-      frequency: const Duration(minutes: 15),
-      constraints: Constraints(
-        networkType: NetworkType.connected,
-      ),
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
-      initialDelay: const Duration(seconds: 10),
+  Future<void> init() async {
+    await Workmanager().initialize(
+      callbackDispatcher,
+      // isInDebugMode removed as it is deprecated
     );
+
+    // Register periodic task (every 1 hour)
+    await Workmanager().registerPeriodicTask(
+      "weather_periodic_check",
+      weatherCheckTask,
+      frequency: const Duration(hours: 1),
+      constraints: Constraints(
+        networkType: NetworkType.connected, // Only run when connected
+      ),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+    );
+
+    if (kDebugMode) print("✅ Background Service Initialized");
   }
 }

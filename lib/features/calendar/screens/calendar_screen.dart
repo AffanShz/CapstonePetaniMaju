@@ -7,208 +7,12 @@ import 'package:intl/intl.dart';
 
 import 'package:petani_maju/features/calendar/bloc/calendar_bloc.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
+import 'package:petani_maju/core/services/notification_scheduler.dart';
+import 'package:petani_maju/widgets/custom_time_picker.dart';
 
 // ==========================================
-// 1. WIDGET PICKER JAM KHUSUS LANSIA
+// 1. WIDGET PICKER JAM DENGAN TOMBOL
 // ==========================================
-
-class ElderlyTimePicker extends StatefulWidget {
-  final TimeOfDay initialTime;
-  final ValueChanged<TimeOfDay> onTimeChanged;
-
-  const ElderlyTimePicker({
-    super.key,
-    required this.initialTime,
-    required this.onTimeChanged,
-  });
-
-  @override
-  State<ElderlyTimePicker> createState() => _ElderlyTimePickerState();
-}
-
-class _ElderlyTimePickerState extends State<ElderlyTimePicker> {
-  late int _hour;
-  late int _minute;
-
-  @override
-  void initState() {
-    super.initState();
-    _hour = widget.initialTime.hour;
-    _minute = widget.initialTime.minute;
-  }
-
-  @override
-  void didUpdateWidget(covariant ElderlyTimePicker oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTime != widget.initialTime) {
-      setState(() {
-        _hour = widget.initialTime.hour;
-        _minute = widget.initialTime.minute;
-      });
-    }
-  }
-
-  void _notifyParent() {
-    widget.onTimeChanged(TimeOfDay(hour: _hour, minute: _minute));
-  }
-
-  void _changeHour(int delta) {
-    setState(() {
-      _hour += delta;
-      if (_hour > 23) _hour = 0;
-      if (_hour < 0) _hour = 23;
-    });
-    _notifyParent();
-  }
-
-  void _changeMinute(int delta) {
-    setState(() {
-      if (_minute % 10 != 0) {
-        _minute = ((_minute / 10).round() * 10);
-      }
-      _minute += delta;
-      if (_minute >= 60) {
-        _minute = 0;
-        _changeHour(1);
-      } else if (_minute < 0) {
-        _minute = 50;
-        _changeHour(-1);
-      }
-    });
-    _notifyParent();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildPresetButton("Pagi ☀️", 7, 0),
-            _buildPresetButton("Sore 🌤️", 16, 0),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildControl(
-              value: _hour,
-              label: "JAM",
-              onUp: () => _changeHour(1),
-              onDown: () => _changeHour(-1),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.0),
-              child: Text(":",
-                  style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54)),
-            ),
-            _buildControl(
-              value: _minute,
-              label: "MENIT",
-              onUp: () => _changeMinute(10),
-              onDown: () => _changeMinute(-10),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPresetButton(String label, int h, int m) {
-    bool isSelected = _hour == h;
-    return ElevatedButton(
-      onPressed: () {
-        setState(() {
-          _hour = h;
-          _minute = m;
-        });
-        _notifyParent();
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? Colors.green : Colors.white,
-        foregroundColor: isSelected ? Colors.white : Colors.black87,
-        elevation: isSelected ? 2 : 0,
-        side: BorderSide(color: isSelected ? Colors.green : Colors.grey[300]!),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      ),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _buildControl({
-    required int value,
-    required String label,
-    required VoidCallback onUp,
-    required VoidCallback onDown,
-  }) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onUp,
-          borderRadius: BorderRadius.circular(50),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.keyboard_arrow_up_rounded,
-                size: 32, color: Colors.green),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey[200]!),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ],
-          ),
-          child: Text(
-            value.toString().padLeft(2, '0'),
-            style: const TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        Text(label,
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
-                fontSize: 12)),
-        const SizedBox(height: 4),
-        InkWell(
-          onTap: onDown,
-          borderRadius: BorderRadius.circular(50),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.keyboard_arrow_down_rounded,
-                size: 32, color: Colors.redAccent),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 // ==========================================
 // 2. MAIN SCREEN - REFACTORED WITH BLOC
@@ -223,6 +27,41 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   final CalendarFormat _calendarFormat = CalendarFormat.month;
+  bool _hasRescheduledNotifications = false;
+
+  /// Reschedule notifications for all existing schedules
+  Future<void> _rescheduleAllNotifications(
+      List<Map<String, dynamic>> schedules) async {
+    if (_hasRescheduledNotifications) return;
+    _hasRescheduledNotifications = true;
+
+    debugPrint(
+        '🔄 Rescheduling notifications for ${schedules.length} existing schedules...');
+
+    for (final schedule in schedules) {
+      try {
+        final id = schedule['id'] as int;
+        final name = schedule['nama_tanaman'] as String;
+        final dateTimeStr = schedule['tanggal_tanam'] as String;
+        final dateTime = DateTime.parse(dateTimeStr);
+
+        // Only reschedule for future events
+        if (dateTime.isAfter(DateTime.now())) {
+          final time = TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
+          await _scheduleNotifications(id, name, dateTime, time);
+        } else {
+          debugPrint('   ⏭️ Skipping past schedule: $name (ID: $id)');
+        }
+      } catch (e) {
+        debugPrint('   ❌ Error rescheduling: $e');
+      }
+    }
+
+    debugPrint('✅ Notification rescheduling complete');
+
+    // Print all pending notifications for debugging
+    await NotificationService().printPendingNotifications();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -235,14 +74,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: BlocConsumer<CalendarBloc, CalendarState>(
-        listener: (context, state) {
-          if (state is CalendarError) {
+        listener: (context, state) async {
+          if (state is CalendarOperationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: Colors.red,
               ),
             );
+          }
+
+          // Auto-reschedule notifications for existing schedules when loaded
+          if (state is CalendarLoaded) {
+            _rescheduleAllNotifications(state.schedules);
           }
 
           // Handle notification scheduling when new schedule is added
@@ -263,6 +107,29 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 backgroundColor: Colors.green,
               ),
             );
+          } else if (state is CalendarScheduleUpdated) {
+            final time = TimeOfDay(
+              hour: state.tanggalTanam.hour,
+              minute: state.tanggalTanam.minute,
+            );
+            // Cancel old notifications first (id*10+0, +1, +2)
+            final scheduler = NotificationScheduler();
+            await scheduler.cancelCalendarReminders(state.scheduleId);
+
+            // Schedule new notifications
+            _scheduleNotifications(
+              state.scheduleId,
+              state.namaTanaman,
+              state.tanggalTanam,
+              time,
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Jadwal berhasil diperbarui!'),
+                backgroundColor: Colors.blue,
+              ),
+            );
           }
         },
         builder: (context, state) {
@@ -276,6 +143,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
           // Also render for CalendarScheduleAdded (it has schedules data)
           if (state is CalendarScheduleAdded) {
+            // Convert to CalendarLoaded for rendering
+            final loadedState = CalendarLoaded(
+              schedules: state.schedules,
+              selectedDate: state.selectedDate,
+              focusedDate: state.focusedDate,
+            );
+            return _buildContent(context, loadedState);
+          }
+
+          if (state is CalendarScheduleUpdated) {
             // Convert to CalendarLoaded for rendering
             final loadedState = CalendarLoaded(
               schedules: state.schedules,
@@ -338,7 +215,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -766,7 +643,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.grey[200]!),
                       ),
-                      child: ElderlyTimePicker(
+                      child: CustomTimePicker(
                         initialTime: selectedTime,
                         onTimeChanged: (newTime) {
                           selectedTime = newTime;
@@ -893,29 +770,58 @@ class _CalendarScreenState extends State<CalendarScreen> {
     TimeOfDay time,
   ) async {
     final notif = NotificationService();
+    final timeFormatted =
+        '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
 
-    await notif.scheduleNotification(
-      id: scheduleId * 10 + 0,
-      title: 'Waktunya: $plantName',
-      body: 'Sekarang saatnya kegiatan $plantName.',
-      scheduledDate: dateTime,
-    );
+    debugPrint(
+        '📅 Scheduling notifications for: $plantName at $dateTime (ID: $scheduleId)');
 
-    await notif.scheduleNotification(
-      id: scheduleId * 10 + 1,
-      title: 'Persiapan: $plantName',
-      body:
-          'Besok jam ${time.hour}:${time.minute.toString().padLeft(2, '0')} ada kegiatan.',
-      scheduledDate: dateTime.subtract(const Duration(hours: 16)),
-    );
+    // 1. Notifikasi tepat waktu
+    final atTimeDate = dateTime;
+    debugPrint('   ⏰ At time: $atTimeDate');
+    if (atTimeDate.isAfter(DateTime.now())) {
+      await notif.scheduleNotification(
+        id: scheduleId * 10 + 0,
+        title: '🌱 Waktunya: $plantName',
+        body: 'Sekarang saatnya kegiatan $plantName.',
+        scheduledDate: atTimeDate,
+      );
+      debugPrint('   ✅ At-time notification scheduled');
+    } else {
+      debugPrint('   ⚠️ At-time skipped (already passed)');
+    }
 
-    await notif.scheduleNotification(
-      id: scheduleId * 10 + 2,
-      title: 'Ingat: $plantName',
-      body:
-          'Nanti jam ${time.hour}:${time.minute.toString().padLeft(2, '0')} ke sawah.',
-      scheduledDate: dateTime.subtract(const Duration(hours: 8)),
-    );
+    // 2. Notifikasi 1 hari (24 jam) sebelum
+    final oneDayBefore = dateTime.subtract(const Duration(days: 1));
+    debugPrint('   📆 1 day before: $oneDayBefore');
+    if (oneDayBefore.isAfter(DateTime.now())) {
+      await notif.scheduleNotification(
+        id: scheduleId * 10 + 1,
+        title: '📅 Pengingat Besok',
+        body: 'Besok jam $timeFormatted ada kegiatan: $plantName',
+        scheduledDate: oneDayBefore,
+      );
+      debugPrint('   ✅ 1-day-before notification scheduled');
+    } else {
+      debugPrint('   ⚠️ 1-day-before skipped (already passed)');
+    }
+
+    // 3. Notifikasi 1 jam sebelum
+    final oneHourBefore = dateTime.subtract(const Duration(hours: 1));
+    debugPrint('   ⏱️ 1 hour before: $oneHourBefore');
+    if (oneHourBefore.isAfter(DateTime.now())) {
+      await notif.scheduleNotification(
+        id: scheduleId * 10 + 2,
+        title: '⏰ 1 Jam Lagi!',
+        body: 'Jam $timeFormatted ada kegiatan: $plantName',
+        scheduledDate: oneHourBefore,
+      );
+      debugPrint('   ✅ 1-hour-before notification scheduled');
+    } else {
+      debugPrint('   ⚠️ 1-hour-before skipped (already passed)');
+    }
+
+    debugPrint('📅 Notification scheduling complete for: $plantName');
   }
 
   Widget _buildModernInput({

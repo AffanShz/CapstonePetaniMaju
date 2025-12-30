@@ -39,9 +39,8 @@ Future<void> main() async {
   await CacheService.init();
   await NotificationService().init();
 
-  // Inisialisasi Background Service & Task
-  await BackgroundService.init();
-  await BackgroundService.registerPeriodicTask();
+  // Inisialisasi Background Service
+  await BackgroundService().init();
 
   await initializeDateFormatting('id_ID', null);
 
