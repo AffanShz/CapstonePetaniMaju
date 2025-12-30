@@ -12,8 +12,53 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/lang/id/).
 ### Planned
 - Notifikasi push untuk peringatan cuaca
 - Multi-language support
-- Dark mode
-- Profil pengguna
+- Profil pengguna dengan sinkronisasi cloud
+- Marketplace hasil tani
+
+---
+
+## [0.3.0] - 2024-12-31
+
+### 🎉 Major Architecture Refactor & Smart Features
+
+Rilis besar yang mengubah arsitektur aplikasi menjadi lebih scalable menggunakan BLoC pattern, serta penambahan fitur cerdas berbasis background service.
+
+### Added
+
+#### 🏗️ Architecture & State Management
+- **Flutter BLoC Implementation**: Migrasi penuh dari `StatefulWidget` biasa ke `flutter_bloc`.
+- **Feature-First Structure**: Restrukturisasi folder menjadi `features/`, `core/`, dan `data/`.
+- **Repository Pattern**: Abstraksi data layer yang lebih bersih untuk Weather, Calendar, dan Tips.
+
+#### 🔔 Smart Notifications & Background Service
+- **Background Service**: Menggunakan `workmanager` untuk cek cuaca secara periodik di background.
+- **Weather Alerts**: Notifikasi otomatis jika ada potensi badai, hujan deras, atau hama.
+- **Morning Briefing**: Notifikasi ringkasan cuaca harian setiap jam 06:00 pagi.
+- **Quiet Mode**: Fitur "Jangan Ganggu" otomatis pada jam 22:00 - 05:00.
+- **Notification Settings**: Halaman pengaturan lengkap untuk mengontrol jenis notifikasi yang ingin diterima.
+
+#### 📅 Smart Calendar
+- **Event Scheduling**: Tambah, Edit, dan Hapus jadwal kegiatan tani.
+- **Automatic Reminders**: Alarm otomatis untuk setiap jadwal (H-1 dan Hari H).
+- **Custom Time Picker**: Widget pemilih waktu yang lebih intuitif.
+
+#### 🧭 Navigation Improvements
+- **"Lihat Semua" Navigation**: Tombol di Home Screen kini berfungsi penuh mengarahkan ke halaman detail atau tab terkait.
+- **Tab Switching**: Navigasi antar tab bottom bar secara programatik dari Home Screen.
+
+### Changed
+
+#### 🛠️ Codebase Improvements
+- **Global Provider**: Setup `MultiRepositoryProvider` dan `MultiBlocProvider` di `main.dart`.
+- **Clean Architecture**: Pemisahan tegas antara Business Logic, UI, dan Data.
+- **Dependency Updates**: Update `flutter_local_notifications` dan `workmanager`.
+
+### Fixed
+
+#### 🐛 Bug Fixes
+- Fix navigasi "Lihat Semua" yang sebelumnya tidak responsif.
+- Fix notifikasi yang tidak muncul saat aplikasi ditutup (killed state).
+- Fix issue state management yang menyebabkan UI tidak update saat data berubah.
 
 ---
 
@@ -24,135 +69,25 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/lang/id/).
 Rilis yang berfokus pada stabilitas dan dukungan offline untuk pengalaman pengguna yang lebih baik.
 
 ### Added
-
-#### 📴 Fitur Offline Mode
-- Toggle Offline Mode di halaman Settings
-- Auto-enable offline mode ketika tidak ada koneksi saat startup
-- Snackbar notifikasi ketika app start dalam mode offline
-- Pest data caching menggunakan Hive
-
-#### ⏱️ Timeout Management
-- Supabase initialization timeout (10 detik)
-- Weather API timeout (10 detik)
-- Tips API timeout (10 detik)
-- Pest API timeout (10 detik)
-- Location API timeout (10 detik)
-- Geolocator timeout (5 detik)
+- **Fitur Offline Mode**: Cache data local first menggunakan Hive.
+- **Timeout Management**: Timeout handling untuk semua API calls (10 detik).
+- **Pest Data Caching**: Simpan data hama lokal.
 
 ### Changed
-
-#### 🔄 Improved Image Loading
-- Semua `Image.network` diganti dengan `CachedNetworkImage`
-- Fallback icons ketika gambar gagal dimuat
-- Placeholder icons saat loading
-
-#### ⚡ Performance Improvements
-- Deferred initialization menggunakan `addPostFrameCallback`
-- Reduced location accuracy untuk startup lebih cepat
-- Simplified navigation (tanpa IndexedStack caching)
-
-### Fixed
-
-#### 🐛 Bug Fixes
-- App freeze saat tidak ada internet
-- App crash saat kembali dari detail screen
-- Splash screen stuck saat offline
-- setState called after dispose
-- Frame skipping saat startup
-
-### Technical Details
-
-#### New Dependencies
-```yaml
-dependencies:
-  cached_network_image: ^3.4.1  # Untuk image caching
-```
-
-#### Updated Files
-- `lib/main.dart` - Supabase timeout, offline detection
-- `lib/core/services/cache_service.dart` - Pest caching, offline mode
-- `lib/data/datasources/weather_service.dart` - 10s timeout
-- `lib/data/datasources/tips_services.dart` - 10s timeout
-- `lib/data/datasources/pest_services.dart` - 10s timeout
-- `lib/data/datasources/location_service.dart` - 10s timeout
-- `lib/features/home/screens/home_screen.dart` - Deferred init, offline check
-- `lib/features/tips/screens/tips_screen.dart` - Deferred init, offline check
-- `lib/features/pests/screens/pest_screen.dart` - Deferred init, offline check
-- `lib/features/weather/screens/weather_detail_screen.dart` - Offline check
-- `lib/features/settings/screens/settings_screen.dart` - Offline toggle
-- `lib/widgets/main_weather_card.dart` - CachedNetworkImage
-- `lib/features/home/widgets/forecast_list.dart` - CachedNetworkImage
-- `lib/widgets/navbaar.dart` - Simplified navigation
+- **Improved Image Loading**: Menggunakan `CachedNetworkImage` dengan placeholder.
+- **Performance**: Optimasi startup time dengan deferred initialization.
 
 ---
-
 
 ## [0.1.0] - 2024-12-17
 
 ### 🎉 Initial Release
 
-Rilis pertama aplikasi Petani Maju dengan fitur-fitur dasar untuk membantu petani Indonesia.
-
-### Added
-
-#### 🌤️ Fitur Cuaca
-- Cuaca real-time berdasarkan lokasi pengguna
-- Prediksi cuaca 4 jam ke depan dengan format hari dan tanggal
-- Lokasi detail (Desa, Kecamatan, Kabupaten, Provinsi)
-- Tema dinamis berdasarkan kondisi cuaca (cerah, hujan, berawan)
-- Peringatan otomatis saat diprediksi hujan dalam 24 jam
-- Tombol refresh untuk update data cuaca
-
-#### 📚 Fitur Tips Pertanian
-- Daftar tips dari database Supabase
-- Filter tips berdasarkan kategori (Padi, Jagung, Nutrisi, dll)
-- Halaman detail tips dengan gambar dan konten lengkap
-
-#### 📅 Fitur Kalender
-- Kalender untuk perencanaan aktivitas pertanian
-
-#### 🐛 Fitur Hama & Penyakit
-- Halaman informasi hama dan penyakit tanaman
-
-#### ⚙️ Fitur Pengaturan
-- Halaman pengaturan aplikasi
-
-#### 💾 Fitur Offline
-- Local caching menggunakan Hive
-- Cache-first loading untuk pengalaman offline
-- Graceful fallback ketika tidak ada koneksi internet
-
-#### 🧭 Navigasi
-- Bottom navigation bar dengan 4 tab (Home, Kalender, Tips, Settings)
-
-#### 📍 Lokasi
-- Request permission lokasi saat aplikasi dibuka
-- Reverse geocoding menggunakan OpenStreetMap Nominatim
-
-### Technical Details
-
-#### Dependencies
-```yaml
-dependencies:
-  flutter: sdk
-  geolocator: ^14.0.2
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  http: ^1.6.0
-  intl: ^0.20.2
-  permission_handler: ^12.0.1
-  supabase_flutter: ^2.0.0
-```
-
-#### API Integrations
-- OpenWeatherMap API untuk data cuaca
-- OpenStreetMap Nominatim untuk reverse geocoding
-- Supabase untuk database tips pertanian
-
-#### Minimum Requirements
-- Flutter SDK >= 3.0.0
-- Android SDK >= 21 (Android 5.0)
-- iOS >= 12.0
+Rilis pertama aplikasi Petani Maju dengan fitur dasar:
+- Cuaca Real-time & Forecast
+- Tips Pertanian
+- Kalender Tanam
+- Info Hama & Penyakit
 
 ---
 
@@ -160,43 +95,6 @@ dependencies:
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 0.3.0 | 2024-12-31 | BLoC Refactor & Smart Notifications |
+| 0.2.0 | 2024-12-21 | Offline Mode & Stability |
 | 0.1.0 | 2024-12-17 | Initial Release |
-
----
-
-## Legend
-
-- 🎉 **Added** - Fitur baru
-- 🔄 **Changed** - Perubahan pada fitur yang ada
-- 🗑️ **Deprecated** - Fitur yang akan dihapus di versi mendatang
-- ❌ **Removed** - Fitur yang dihapus
-- 🐛 **Fixed** - Bug fixes
-- 🔒 **Security** - Perbaikan keamanan
-
----
-
-## Cara Update Changelog
-
-Saat melakukan perubahan pada project, tambahkan entry baru di section `[Unreleased]`:
-
-```markdown
-## [Unreleased]
-
-### Added
-- Deskripsi fitur baru yang ditambahkan
-
-### Changed
-- Deskripsi perubahan pada fitur yang ada
-
-### Fixed
-- Deskripsi bug yang diperbaiki
-```
-
-Saat siap merilis versi baru:
-1. Ganti `[Unreleased]` menjadi `[X.X.X] - YYYY-MM-DD`
-2. Tambahkan section `[Unreleased]` baru di atas
-3. Update tabel Version History
-
----
-
-*Changelog ini mengikuti format [Keep a Changelog](https://keepachangelog.com/)*
