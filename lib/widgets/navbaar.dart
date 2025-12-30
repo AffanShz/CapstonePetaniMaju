@@ -48,7 +48,9 @@ class _MainScreenState extends State<MainScreen> {
               weatherRepository: context.read<WeatherRepository>(),
               cacheService: CacheService(),
             )..add(LoadHomeData()),
-            child: const HomeScreen(),
+            child: HomeScreen(
+              onTabChange: _onItemTapped,
+            ),
           ),
 
           // Calendar Screen dengan BlocProvider

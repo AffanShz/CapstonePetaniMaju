@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:petani_maju/data/models/notification_settings.dart';
 
 /// Service for caching API data locally using Hive
 /// Supports offline-first approach: load cache first, then fetch API
@@ -170,5 +171,35 @@ class CacheService {
   /// Get offline mode preference (default: false = online)
   bool getOfflineMode() {
     return _settingsBox.get('offlineMode', defaultValue: false) as bool;
+  }
+
+  // ==================== NOTIFICATION SETTINGS ====================
+
+  /// Save notification settings
+  Future<void> saveNotificationSettings(NotificationSettings settings) async {
+    await _settingsBox.put('notificationSettings', settings.toJson());
+  }
+
+  /// Get notification settings (returns default if not set)
+  NotificationSettings getNotificationSettings() {
+    final data = _settingsBox.get('notificationSettings');
+    if (data != null) {
+      return NotificationSettings.fromJson(Map<String, dynamic>.from(data));
+    }
+    return const NotificationSettings();
+  }
+
+  /// Get last rain date for smart watering feature
+  DateTime? getLastRainDate() {
+    final timestamp = _settingsBox.get('lastRainDate');
+    if (timestamp != null) {
+      return DateTime.parse(timestamp);
+    }
+    return null;
+  }
+
+  /// Set last rain date
+  Future<void> setLastRainDate(DateTime date) async {
+    await _settingsBox.put('lastRainDate', date.toIso8601String());
   }
 }

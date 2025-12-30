@@ -147,17 +147,39 @@ class NotificationService {
     required DateTime scheduledDate,
   }) async {
     try {
+      if (kDebugMode) {
+        print('🔔 scheduleNotification called:');
+        print('   ID: $id');
+        print('   Title: $title');
+        print('   Scheduled: $scheduledDate');
+      }
+
       final tz.TZDateTime tzScheduledDate =
           tz.TZDateTime.from(scheduledDate, tz.local);
       tz.TZDateTime finalScheduledDate = tzScheduledDate;
       final now = tz.TZDateTime.now(tz.local);
 
+      if (kDebugMode) {
+        print('   TZ Scheduled: $tzScheduledDate');
+        print('   TZ Now: $now');
+      }
+
       if (finalScheduledDate.isBefore(now)) {
         if (now.difference(finalScheduledDate).inMinutes < 5) {
-          finalScheduledDate = now.add(const Duration(seconds: 2));
+          // Jika kurang dari 5 menit yang lalu, tampilkan sekarang
+          finalScheduledDate = now.add(const Duration(seconds: 5));
+          if (kDebugMode)
+            print('   ⚡ Adjusted to: $finalScheduledDate (was in past <5min)');
         } else {
+          if (kDebugMode)
+            print(
+                '   ❌ SKIPPED: Time already passed by ${now.difference(finalScheduledDate).inMinutes} minutes');
           return;
         }
+      }
+
+      if (kDebugMode) {
+        print('   📅 Final scheduled time: $finalScheduledDate');
       }
 
       await _notificationsPlugin.zonedSchedule(
@@ -173,18 +195,49 @@ class NotificationService {
             importance: Importance.max,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
+            playSound: true,
+            enableVibration: true,
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
       );
+
+      if (kDebugMode) print('   ✅ Notification $id scheduled successfully!');
     } catch (e) {
-      if (kDebugMode) print("Schedule failed: $e");
+      if (kDebugMode) print("❌ Schedule failed for ID $id: $e");
     }
   }
 
   Future<void> cancelNotification(int id) async {
     await _notificationsPlugin.cancel(id);
+    if (kDebugMode) print('🗑️ Notification $id cancelled');
+  }
+
+  /// Get list of all pending (scheduled) notifications
+  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    return await _notificationsPlugin.pendingNotificationRequests();
+  }
+
+  /// Print all pending notifications for debugging
+  Future<void> printPendingNotifications() async {
+    final pending = await getPendingNotifications();
+    if (kDebugMode) {
+      print('📋 Pending Notifications: ${pending.length}');
+      for (var n in pending) {
+        print('   ID: ${n.id}, Title: ${n.title}');
+      }
+    }
+  }
+
+  /// Show a test notification immediately (for debugging)
+  Future<void> showTestNotification() async {
+    await showNotification(
+      id: 9999,
+      title: '🧪 Test Notifikasi',
+      body: 'Jika Anda melihat ini, notifikasi berfungsi dengan baik!',
+      payload: 'test',
+    );
   }
 }

@@ -12,7 +12,8 @@ import 'package:petani_maju/features/weather/screens/weather_detail_screen.dart'
 import 'package:petani_maju/core/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(int)? onTabChange;
+  const HomeScreen({super.key, this.onTabChange});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -175,11 +176,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 20),
               ],
 
-              const SectionHeader(title: 'Prediksi Cuaca (Per 6 Jam)'),
+              SectionHeader(
+                title: 'Prediksi Cuaca (Per 6 Jam)',
+                onActionTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const WeatherDetailScreen(),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 20),
               ForecastList(forecastData: state.forecastList),
+
               const SizedBox(height: 20),
-              const SectionHeader(title: 'Tips Pertanian'),
+
+              SectionHeader(
+                title: 'Tips Pertanian',
+                onActionTap: () {
+                  if (widget.onTabChange != null) {
+                    widget.onTabChange!(2); // Switch to Tips tab (index 2)
+                  }
+                },
+              ),
               const SizedBox(height: 16),
               const TipsList(),
               const SizedBox(height: 20),

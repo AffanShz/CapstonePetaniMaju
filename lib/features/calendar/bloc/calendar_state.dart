@@ -90,6 +90,28 @@ class CalendarScheduleAdded extends CalendarState {
       [newScheduleId, namaTanaman, tanggalTanam, schedules];
 }
 
+/// State saat jadwal berhasil diperbarui (dengan ID untuk update notifikasi)
+class CalendarScheduleUpdated extends CalendarState {
+  final int scheduleId;
+  final String namaTanaman;
+  final DateTime tanggalTanam;
+  final List<Map<String, dynamic>> schedules;
+  final DateTime selectedDate;
+  final DateTime focusedDate;
+
+  const CalendarScheduleUpdated({
+    required this.scheduleId,
+    required this.namaTanaman,
+    required this.tanggalTanam,
+    required this.schedules,
+    required this.selectedDate,
+    required this.focusedDate,
+  });
+
+  @override
+  List<Object?> get props => [scheduleId, namaTanaman, tanggalTanam, schedules];
+}
+
 /// State saat terjadi error
 class CalendarError extends CalendarState {
   final String message;

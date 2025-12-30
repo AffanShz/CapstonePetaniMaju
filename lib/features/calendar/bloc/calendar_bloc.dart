@@ -68,11 +68,20 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
           ? currentState.focusedDate
           : DateTime.now();
 
-      // Emit state dengan ID baru untuk notification scheduling
+      // Emit CalendarScheduleAdded first for notification scheduling
       emit(CalendarScheduleAdded(
         newScheduleId: newId,
         namaTanaman: event.namaTanaman,
         tanggalTanam: event.tanggalTanam,
+        schedules: schedules,
+        selectedDate: selectedDate,
+        focusedDate: focusedDate,
+      ));
+
+      // Then emit CalendarLoaded to restore normal state
+      // This fixes the issue where calendar becomes stuck after adding
+      await Future.delayed(const Duration(milliseconds: 100));
+      emit(CalendarLoaded(
         schedules: schedules,
         selectedDate: selectedDate,
         focusedDate: focusedDate,
@@ -100,9 +109,30 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final schedules = await _calendarRepository.fetchSchedules();
 
       final currentState = state;
-      if (currentState is CalendarLoaded) {
-        emit(currentState.copyWith(schedules: schedules));
-      }
+      final selectedDate = currentState is CalendarLoaded
+          ? currentState.selectedDate
+          : DateTime.now();
+      final focusedDate = currentState is CalendarLoaded
+          ? currentState.focusedDate
+          : DateTime.now();
+
+      // Emit CalendarScheduleUpdated first for notification rescheduling
+      emit(CalendarScheduleUpdated(
+        scheduleId: event.id,
+        namaTanaman: event.namaTanaman,
+        tanggalTanam: event.tanggalTanam,
+        schedules: schedules,
+        selectedDate: selectedDate,
+        focusedDate: focusedDate,
+      ));
+
+      // Then emit CalendarLoaded to restore normal state
+      await Future.delayed(const Duration(milliseconds: 100));
+      emit(CalendarLoaded(
+        schedules: schedules,
+        selectedDate: selectedDate,
+        focusedDate: focusedDate,
+      ));
     } catch (e) {
       debugPrint('CalendarBloc Update Error: $e');
       emit(CalendarError(message: 'Gagal mengupdate jadwal: $e'));
