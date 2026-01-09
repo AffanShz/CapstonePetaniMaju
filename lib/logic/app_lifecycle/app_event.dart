@@ -30,3 +30,5 @@ class ToggleOfflineMode extends AppEvent {
   @override
   List<Object?> get props => [offlineMode];
 }
+
+class CompleteOnboarding extends AppEvent {}

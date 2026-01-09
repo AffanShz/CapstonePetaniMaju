@@ -14,6 +14,8 @@ class AppInitial extends AppState {}
 /// State saat aplikasi sedang inisialisasi
 class AppLoading extends AppState {}
 
+class AppOnboarding extends AppState {}
+
 /// State saat aplikasi siap digunakan
 class AppReady extends AppState {
   /// Apakah saat ini terhubung ke internet
