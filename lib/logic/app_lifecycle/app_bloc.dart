@@ -26,6 +26,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     on<AppStarted>(_onAppStarted);
     on<ConnectivityChanged>(_onConnectivityChanged);
     on<ToggleOfflineMode>(_onToggleOfflineMode);
+    on<CompleteOnboarding>(_onCompleteOnboarding);
   }
 
   /// Handle aplikasi pertama kali dimulai
@@ -42,6 +43,20 @@ class AppBloc extends Bloc<AppEvent, AppState> {
 
       // Get saved offline mode preference
       final offlineModeEnabled = _cacheService.getOfflineMode();
+
+      // Check for first time launch for Onboarding
+      if (_cacheService.isFirstTime()) {
+        emit(AppOnboarding());
+
+        // Listen to connectivity changes even during onboarding
+        _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
+          (result) {
+            final connected = !result.contains(ConnectivityResult.none);
+            add(ConnectivityChanged(isConnected: connected));
+          },
+        );
+        return;
+      }
 
       // Listen to connectivity changes
       _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
@@ -89,6 +104,23 @@ class AppBloc extends Bloc<AppEvent, AppState> {
       emit(currentState.copyWith(offlineModeEnabled: event.offlineMode));
       debugPrint('AppBloc: Offline mode set to ${event.offlineMode}');
     }
+  }
+
+  Future<void> _onCompleteOnboarding(
+    CompleteOnboarding event,
+    Emitter<AppState> emit,
+  ) async {
+    await _cacheService.setFirstTime(false);
+
+    // We can re-check connectivity or use existing state logic
+    final connectivityResult = await _connectivity.checkConnectivity();
+    final isConnected = !connectivityResult.contains(ConnectivityResult.none);
+    final offlineModeEnabled = _cacheService.getOfflineMode();
+
+    emit(AppReady(
+      isConnected: isConnected,
+      offlineModeEnabled: offlineModeEnabled,
+    ));
   }
 
   @override

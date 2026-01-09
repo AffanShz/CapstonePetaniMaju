@@ -27,6 +27,7 @@ import 'package:petani_maju/data/repositories/calendar_repository.dart';
 import 'package:petani_maju/logic/app_lifecycle/app_bloc.dart';
 
 // UI
+import 'package:petani_maju/features/onboarding/screens/onboarding_screen.dart';
 import 'package:petani_maju/widgets/navbaar.dart';
 
 bool appStartedOffline = false;
@@ -118,31 +119,47 @@ class MainApp extends StatelessWidget {
             scaffoldBackgroundColor: const Color(0xFFF8F9FA),
             useMaterial3: true,
           ),
-          home: BlocListener<AppBloc, AppState>(
-            listener: (context, state) {
-              if (state is AppReady && !state.isConnected) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Row(
-                      children: [
-                        Icon(Icons.wifi_off, color: Colors.white),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Tidak ada koneksi internet. Menggunakan data tersimpan.',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    backgroundColor: Colors.orange.shade700,
-                    duration: const Duration(seconds: 4),
-                    behavior: SnackBarBehavior.floating,
+          home: BlocBuilder<AppBloc, AppState>(
+            builder: (context, state) {
+              if (state is AppLoading) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
                   ),
                 );
               }
+
+              if (state is AppOnboarding) {
+                return const OnboardingScreen();
+              }
+
+              return BlocListener<AppBloc, AppState>(
+                listener: (context, state) {
+                  if (state is AppReady && !state.isConnected) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.wifi_off, color: Colors.white),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Tidak ada koneksi internet. Menggunakan data tersimpan.',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor: Colors.orange.shade700,
+                        duration: const Duration(seconds: 4),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+                child: const MainScreen(),
+              );
             },
-            child: const MainScreen(),
           ),
         ),
       ),

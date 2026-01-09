@@ -27,6 +27,18 @@ class CacheService {
 
   static const String _plantingScheduleBoxName = 'plantingSchedule';
 
+  // ==================== SETTINGS & ONBOARDING ====================
+
+  /// Check if it's the first time the app is run
+  bool isFirstTime() {
+    return _settingsBox.get('isFirstTime', defaultValue: true) as bool;
+  }
+
+  /// Set first time flag
+  Future<void> setFirstTime(bool value) async {
+    await _settingsBox.put('isFirstTime', value);
+  }
+
   // ==================== WEATHER CACHE ====================
 
   Box get _weatherBox => Hive.box(_weatherBoxName);
