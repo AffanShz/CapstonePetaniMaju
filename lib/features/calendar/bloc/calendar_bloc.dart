@@ -19,7 +19,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     on<AddSchedule>(_onAddSchedule);
     on<UpdateSchedule>(_onUpdateSchedule);
     on<DeleteSchedule>(_onDeleteSchedule);
+
     on<SelectDate>(_onSelectDate);
+    on<PageChanged>(_onPageChanged);
   }
 
   /// Handle load schedules
@@ -170,6 +172,19 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       emit(currentState.copyWith(
         selectedDate: event.date,
         focusedDate: event.date,
+      ));
+    }
+  }
+
+  /// Handle page changed (month swiping)
+  void _onPageChanged(
+    PageChanged event,
+    Emitter<CalendarState> emit,
+  ) {
+    final currentState = state;
+    if (currentState is CalendarLoaded) {
+      emit(currentState.copyWith(
+        focusedDate: event.focusedDay,
       ));
     }
   }

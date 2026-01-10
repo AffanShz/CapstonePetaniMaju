@@ -64,3 +64,13 @@ class SelectDate extends CalendarEvent {
   @override
   List<Object?> get props => [date];
 }
+
+/// Event saat halaman kalender berubah (ganti bulan)
+class PageChanged extends CalendarEvent {
+  final DateTime focusedDay;
+
+  const PageChanged({required this.focusedDay});
+
+  @override
+  List<Object?> get props => [focusedDay];
+}

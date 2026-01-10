@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:petani_maju/core/constants/colors.dart';
+import 'package:petani_maju/core/services/cache_service.dart';
+import 'package:petani_maju/features/notifications/screens/notification_history_screen.dart';
 
-class CustomAppBar extends StatelessWidget {
+class CustomAppBar extends StatefulWidget {
   final DateTime? lastSyncTime;
   final bool isOnline;
 
@@ -11,11 +15,49 @@ class CustomAppBar extends StatelessWidget {
     this.isOnline = true,
   });
 
+  @override
+  State<CustomAppBar> createState() => _CustomAppBarState();
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+  final CacheService _cacheService = CacheService();
+  StreamSubscription<Map<String, String?>>? _profileSubscription;
+  String _userName = 'Pak Tani';
+  String? _userImagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+    _profileSubscription = _cacheService.profileUpdateStream.listen((profile) {
+      if (mounted) {
+        setState(() {
+          _userName = profile['name'] ?? 'Pak Tani';
+          _userImagePath = profile['imagePath'];
+        });
+      }
+    });
+  }
+
+  void _loadProfile() {
+    final profile = _cacheService.getUserProfile();
+    setState(() {
+      _userName = profile['name'] ?? 'Pak Tani';
+      _userImagePath = profile['imagePath'];
+    });
+  }
+
+  @override
+  void dispose() {
+    _profileSubscription?.cancel();
+    super.dispose();
+  }
+
   String _formatLastSync() {
-    if (lastSyncTime == null) return 'Belum tersinkronisasi';
+    if (widget.lastSyncTime == null) return 'Belum tersinkronisasi';
 
     final now = DateTime.now();
-    final diff = now.difference(lastSyncTime!);
+    final diff = now.difference(widget.lastSyncTime!);
 
     if (diff.inMinutes < 1) {
       return 'Baru saja';
@@ -44,22 +86,31 @@ class CustomAppBar extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
+                      shape: BoxShape.circle,
                       color: AppColors.primaryGreen,
-                      borderRadius: BorderRadius.circular(24),
+                      image: DecorationImage(
+                        image: _userImagePath != null
+                            ? FileImage(File(_userImagePath!)) as ImageProvider
+                            : const AssetImage(
+                                'assets/images/user_placeholder.png'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+                    child: _userImagePath == null
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 28,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Pak Budi Santoso',
-                        style: TextStyle(
+                      Text(
+                        _userName,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -79,7 +130,15 @@ class CustomAppBar extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const NotificationHistoryScreen(),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.notifications_outlined, size: 24),
                   ),
                 ],
@@ -92,7 +151,7 @@ class CustomAppBar extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: isOnline
+            color: widget.isOnline
                 ? AppColors.primaryGreen
                 : AppColors.primaryGreen.withAlpha(200),
             borderRadius: BorderRadius.circular(24),
@@ -102,13 +161,13 @@ class CustomAppBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isOnline ? Icons.cloud_done : Icons.cloud_off,
+                widget.isOnline ? Icons.cloud_done : Icons.cloud_off,
                 color: Colors.white,
                 size: 18,
               ),
               const SizedBox(width: 8),
               Text(
-                isOnline
+                widget.isOnline
                     ? 'Online – Data terakhir: ${_formatLastSync()}'
                     : 'Mode Offline – Data terakhir: ${_formatLastSync()}',
                 style: const TextStyle(

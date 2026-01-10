@@ -1,7 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:petani_maju/core/constants/colors.dart';
 import 'package:petani_maju/core/services/cache_service.dart';
+import 'package:petani_maju/features/settings/screens/profile_screen.dart';
+
 import 'package:petani_maju/features/settings/screens/notification_settings_screen.dart';
+import 'package:petani_maju/core/services/connectivity_service.dart';
+import 'dart:async';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,17 +17,53 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final CacheService _cacheService = CacheService();
+  final ConnectivityService _connectivityService = ConnectivityService();
+  StreamSubscription<bool>? _offlineSubscription;
+  StreamSubscription<Map<String, String?>>? _profileSubscription;
   bool _offlineMode = false;
+  String _userName = 'Pak Tani';
+  String? _userImagePath;
 
   @override
   void initState() {
     super.initState();
     _loadOfflineMode();
+    _listenToConnectivity();
+  }
+
+  void _listenToConnectivity() {
+    _offlineSubscription =
+        _connectivityService.offlineStatusStream.listen((isOffline) {
+      if (mounted) {
+        setState(() {
+          _offlineMode = isOffline;
+        });
+      }
+    });
+
+    _profileSubscription = _cacheService.profileUpdateStream.listen((profile) {
+      if (mounted) {
+        setState(() {
+          _userName = profile['name'] ?? 'Pak Tani';
+          _userImagePath = profile['imagePath'];
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _offlineSubscription?.cancel();
+    _profileSubscription?.cancel();
+    super.dispose();
   }
 
   void _loadOfflineMode() {
     setState(() {
       _offlineMode = _cacheService.getOfflineMode();
+      final profile = _cacheService.getUserProfile();
+      _userName = profile['name'] ?? 'Pak Tani';
+      _userImagePath = profile['imagePath'];
     });
   }
 
@@ -76,14 +117,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSettingsTile(
                   icon: Icons.person_outline,
                   title: 'Profil Saya',
-                  onTap: () {},
-                ),
-                _buildDivider(),
-                _buildSettingsTile(
-                  icon: Icons.location_on_outlined,
-                  title: 'Lokasi',
-                  subtitle: 'Subang, Jawa Barat',
-                  onTap: () {},
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ProfileScreen()),
+                    );
+                    if (result == true) {
+                      _loadOfflineMode();
+                    }
+                  },
                 ),
               ]),
               const SizedBox(height: 24),
@@ -134,21 +177,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildDivider(),
                 _buildSettingsTile(
                   icon: null,
-                  title: 'Syarat & Ketentuan',
-                  onTap: () {},
-                ),
-                _buildDivider(),
-                _buildSettingsTile(
-                  icon: null,
                   title: 'Tentang Aplikasi',
                   subtitle: 'v1.0.0',
                   onTap: () {},
                 ),
               ]),
-              const SizedBox(height: 24),
-
-              // Logout Button
-              _buildLogoutButton(),
               const SizedBox(height: 24),
             ],
           ),
@@ -164,29 +197,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
+            shape: BoxShape.circle,
             color: AppColors.primaryGreen,
-            borderRadius: BorderRadius.circular(30),
+            image: DecorationImage(
+              image: _userImagePath != null
+                  ? FileImage(File(_userImagePath!)) as ImageProvider
+                  : const AssetImage('assets/images/user_placeholder.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-          child: const Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 32,
-          ),
+          child: _userImagePath == null
+              ? const Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: 32,
+                )
+              : null,
         ),
         const SizedBox(width: 16),
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Pak Budi Santoso',
-              style: TextStyle(
+              _userName,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 4),
-            Text(
-              'budisantoso@email.com',
+            const SizedBox(height: 4),
+            const Text(
+              'Petani Maju',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey,
@@ -319,58 +360,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       indent: 16,
       endIndent: 16,
       color: Colors.grey.shade200,
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: () {
-          _showLogoutDialog();
-        },
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primaryGreen,
-          side: BorderSide(color: Colors.grey.shade300),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: const Text(
-          'Keluar dari Akun',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Keluar dari Akun'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Add logout logic here
-            },
-            child: Text(
-              'Keluar',
-              style: TextStyle(color: AppColors.red),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
