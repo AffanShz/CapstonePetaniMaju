@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:petani_maju/data/models/notification_settings.dart';
 
 /// Service for caching API data locally using Hive
@@ -14,15 +16,40 @@ class CacheService {
   static const String _locationBoxName = 'locationCache';
   static const String _settingsBoxName = 'settingsCache';
 
-  /// Initialize Hive and open all boxes
+  /// Initialize Hive and open all boxes with encryption
   /// Call this in main() before runApp()
   static Future<void> init() async {
     await Hive.initFlutter();
-    await Hive.openBox(_weatherBoxName);
-    await Hive.openBox(_tipsBoxName);
-    await Hive.openBox(_locationBoxName);
-    await Hive.openBox(_settingsBoxName);
-    await Hive.openBox(_plantingScheduleBoxName);
+
+    final encryptionKey = await _getEncryptionKey();
+
+    await Hive.openBox(_weatherBoxName,
+        encryptionCipher: HiveAesCipher(encryptionKey));
+    await Hive.openBox(_tipsBoxName,
+        encryptionCipher: HiveAesCipher(encryptionKey));
+    await Hive.openBox(_locationBoxName,
+        encryptionCipher: HiveAesCipher(encryptionKey));
+    await Hive.openBox(_settingsBoxName,
+        encryptionCipher: HiveAesCipher(encryptionKey));
+    await Hive.openBox(_plantingScheduleBoxName,
+        encryptionCipher: HiveAesCipher(encryptionKey));
+  }
+
+  static Future<List<int>> _getEncryptionKey() async {
+    const secureStorage = FlutterSecureStorage();
+    const keyName = 'hive_encryption_key';
+    final keyString = await secureStorage.read(key: keyName);
+
+    if (keyString == null) {
+      final key = Hive.generateSecureKey();
+      await secureStorage.write(
+        key: keyName,
+        value: base64UrlEncode(key),
+      );
+      return key;
+    } else {
+      return base64Url.decode(keyString);
+    }
   }
 
   static const String _plantingScheduleBoxName = 'plantingSchedule';
