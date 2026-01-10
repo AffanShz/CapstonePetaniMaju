@@ -149,4 +149,11 @@ Digunakan untuk penjadwalan presisi.
 | **Nominatim** | 1 call/sec | Cache di Hive (Persistent) |
 | **Supabase** | Bandwidth dependent | Cache Text Content |
 
-*Dokumentasi ini terakhir diperbarui: Desember 2024*
+
+## 🔒 Data Privacy
+
+Aplikasi ini menerapkan prinsip **Local First** untuk data pribadi pengguna.
+- **Profil Pengguna (Nama & Foto)**: Disimpan **Hanya di Device** (via Hive). Tidak dikirim ke server manapun.
+- **Lokasi**: Digunakan hanya untuk mengambil data cuaca, tidak dilacak atau disimpan di server remote.
+
+*Dokumentasi ini terakhir diperbarui: Januari 2026*

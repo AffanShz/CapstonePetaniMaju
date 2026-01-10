@@ -5,6 +5,8 @@ import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/features/settings/screens/profile_screen.dart';
 
 import 'package:petani_maju/features/settings/screens/notification_settings_screen.dart';
+import 'package:petani_maju/features/settings/screens/help_support_screen.dart';
+import 'package:petani_maju/features/settings/screens/about_app_screen.dart';
 import 'package:petani_maju/core/services/connectivity_service.dart';
 import 'dart:async';
 
@@ -172,14 +174,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSettingsTile(
                   icon: null,
                   title: 'Bantuan & Dukungan',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HelpSupportScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDivider(),
                 _buildSettingsTile(
                   icon: null,
                   title: 'Tentang Aplikasi',
                   subtitle: 'v1.0.0',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AboutAppScreen(),
+                      ),
+                    );
+                  },
                 ),
               ]),
               const SizedBox(height: 24),

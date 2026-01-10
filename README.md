@@ -34,6 +34,11 @@ Aplikasi mobile pintar untuk membantu petani Indonesia dengan informasi cuaca re
 - **Konten Terkurasi**: Tips budidaya Padi, Jagung, dan Nutrisi Tanaman.
 - **Offline Cache**: Artikel tersimpan lokal, baca kapan saja tanpa internet.
 
+### 👤 Manajemen Profil & Support
+- **Profil Lokal**: Personalisasi nama dan foto pengguna.
+- **Bantuan Pengguna**: Layanan support via email terintegrasi.
+- **Transparansi**: Informasi lengkap tentang aplikasi dan versi.
+
 ## 🛠️ Tech Stack & Architecture
 
 Aplikasi ini dibangun dengan **Clean Architecture** dan **BLoC Pattern** untuk skalabilitas maksimal.
@@ -48,6 +53,15 @@ Aplikasi ini dibangun dengan **Clean Architecture** dan **BLoC Pattern** untuk s
 | **Local Storage** | Hive (NoSQL Database) |
 | **Background Service** | Workmanager & Android Alarm Manager |
 | **Notifications** | Flutter Local Notifications |
+
+## 📋 Riwayat Versi
+
+| Versi | Tanggal | Deskripsi |
+|-------|---------|-----------|
+| 0.4.0 | 2026-01-11 | Profile, Support, & Security Improvements |
+| 0.3.0 | 2025-12-31 | BLoC Refactor & Smart Notifications |
+| 0.2.0 | 2025-12-21 | Offline Mode & Stability |
+| 0.1.0 | 2025-12-17 | Initial Release (Weather & Calendar Core) |
 
 ## 📦 Dependencies Utama
 
@@ -139,7 +153,10 @@ Update UI
 ```
 
 ## 🤝 Team
-- **Affan** - Mobile Development (Flutter)
+- **Adam Raga - A11.2024.15598**
+- **Affan Shahzada - A11.2024.15784**
+- **Aiska Zahra Nailani - A11.2024.16014**
+- **Nur Alif Maulana - A11.2024.15936**
 
 ---
 *Dibuat dengan ❤️ untuk kemajuan pertanian Indonesia.*

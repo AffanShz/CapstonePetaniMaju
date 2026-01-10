@@ -65,7 +65,6 @@ Future<void> main() async {
     CacheService().setOfflineMode(true);
   }
 
-  debugPrint('DEBUG: Calling runApp');
   runApp(const MainApp());
 }
 
@@ -74,7 +73,6 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('DEBUG: MainApp build started');
     final cacheService = CacheService();
     final weatherService = WeatherService();
     final locationService = LocationService();

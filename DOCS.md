@@ -255,7 +255,11 @@ Detail cuaca yang lebih lengkap:
 
 ### Settings (`features/settings/`)
 
-Halaman pengaturan aplikasi.
+Halaman pengaturan aplikasi yang mencakup:
+- **Profil Pengguna**: Edit nama dan foto profil (Local Hive Storage).
+- **Notifikasi**: Pengaturan granular untuk alert cuaca dan jadwal.
+- **Bantuan & Dukungan**: Direct email support.
+- **Tentang Aplikasi**: Informasi versi.
 
 ---
 
@@ -329,6 +333,7 @@ main()
   ├── WidgetsFlutterBinding.ensureInitialized()
   ├── CacheService.init()           # Inisialisasi Hive
   ├── Supabase.initialize()         # Inisialisasi Supabase
+  ├── ConnectivityService.init()    # Non-blocking network check
   └── runApp(MainApp())
         └── MainScreen (NavBar)
               └── HomeScreen (default)

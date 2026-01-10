@@ -32,7 +32,6 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     AppStarted event,
     Emitter<AppState> emit,
   ) async {
-    debugPrint('DEBUG: AppBloc _onAppStarted called');
     emit(AppLoading());
 
     try {
@@ -72,7 +71,6 @@ class AppBloc extends Bloc<AppEvent, AppState> {
         return;
       }
 
-      debugPrint('DEBUG: AppBloc emitting AppReady');
       emit(AppReady(
         isConnected: isConnected,
         offlineModeEnabled: offlineModeEnabled,
