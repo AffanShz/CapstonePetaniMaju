@@ -8,7 +8,9 @@ import 'package:intl/date_symbol_data_local.dart';
 // Core Services
 import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
+
 import 'package:petani_maju/core/services/background_service.dart';
+import 'package:petani_maju/core/services/connectivity_service.dart';
 
 // Datasources
 import 'package:petani_maju/data/datasources/weather_service.dart';
@@ -42,6 +44,8 @@ Future<void> main() async {
 
   // Inisialisasi Background Service
   await BackgroundService().init();
+  // ConnectivityService di-init secara async agar tidak blocking startup
+  ConnectivityService().init();
 
   await initializeDateFormatting('id_ID', null);
 

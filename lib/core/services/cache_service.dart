@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:petani_maju/data/models/notification_settings.dart';
@@ -10,11 +11,18 @@ class CacheService {
   factory CacheService() => _instance;
   CacheService._internal();
 
+  // Profile update stream
+  final _profileUpdateController =
+      StreamController<Map<String, String?>>.broadcast();
+  Stream<Map<String, String?>> get profileUpdateStream =>
+      _profileUpdateController.stream;
+
   // Box names
   static const String _weatherBoxName = 'weatherCache';
   static const String _tipsBoxName = 'tipsCache';
   static const String _locationBoxName = 'locationCache';
   static const String _settingsBoxName = 'settingsCache';
+  static const String _notificationHistoryBoxName = 'notificationHistory';
 
   /// Initialize Hive and open all boxes with encryption
   /// Call this in main() before runApp()
@@ -32,6 +40,8 @@ class CacheService {
     await Hive.openBox(_settingsBoxName,
         encryptionCipher: HiveAesCipher(encryptionKey));
     await Hive.openBox(_plantingScheduleBoxName,
+        encryptionCipher: HiveAesCipher(encryptionKey));
+    await Hive.openBox(_notificationHistoryBoxName,
         encryptionCipher: HiveAesCipher(encryptionKey));
   }
 
@@ -212,6 +222,22 @@ class CacheService {
     return _settingsBox.get('offlineMode', defaultValue: false) as bool;
   }
 
+  /// Save user profile
+  Future<void> saveUserProfile({String? name, String? imagePath}) async {
+    if (name != null) await _settingsBox.put('userName', name);
+    if (imagePath != null) await _settingsBox.put('userImage', imagePath);
+
+    // Broadcast update
+    _profileUpdateController.add(getUserProfile());
+  }
+
+  /// Get user profile
+  Map<String, String?> getUserProfile() {
+    final name = _settingsBox.get('userName', defaultValue: 'Pak Tani');
+    final image = _settingsBox.get('userImage');
+    return {'name': name, 'imagePath': image};
+  }
+
   // ==================== NOTIFICATION SETTINGS ====================
 
   /// Save notification settings
@@ -240,5 +266,46 @@ class CacheService {
   /// Set last rain date
   Future<void> setLastRainDate(DateTime date) async {
     await _settingsBox.put('lastRainDate', date.toIso8601String());
+  }
+
+  // ==================== NOTIFICATION HISTORY ====================
+
+  Box get _notificationHistoryBox => Hive.box(_notificationHistoryBoxName);
+
+  /// Save a new notification to history
+  Future<void> saveNotification(Map<String, dynamic> notification) async {
+    // Gunakan timestamp sebagai key untuk sorting mudah
+    await _notificationHistoryBox.add(notification);
+  }
+
+  /// Get all history, sorted by newest first
+  List<Map<String, dynamic>> getNotificationHistory() {
+    final data = _notificationHistoryBox.values.toList();
+    final List<Map<String, dynamic>> history = data
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList(); // Cast dynamic map to typed map
+
+    // Sort descending by timestamp
+    history.sort((a, b) {
+      final tA = DateTime.tryParse(a['timestamp'] ?? '') ?? DateTime(2000);
+      final tB = DateTime.tryParse(b['timestamp'] ?? '') ?? DateTime(2000);
+      return tB.compareTo(tA);
+    });
+
+    return history;
+  }
+
+  /// Remove notification by ID
+  Future<void> removeNotification(int id) async {
+    final history = _notificationHistoryBox.values.toList();
+    final index = history.indexWhere((element) => element['id'] == id);
+    if (index != -1) {
+      await _notificationHistoryBox.deleteAt(index);
+    }
+  }
+
+  /// Clear all history
+  Future<void> clearNotificationHistory() async {
+    await _notificationHistoryBox.clear();
   }
 }

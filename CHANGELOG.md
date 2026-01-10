@@ -17,6 +17,26 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/lang/id/).
 
 ---
 
+## [0.4.0] - 2026-01-11
+
+### 🎉 User Experience & Profile Management
+
+Rilis ini berfokus pada manajemen profil pengguna, dukungan teknis, dan perbaikan stabilitas startup.
+
+### Added
+- **Profil Pengguna Lokal**: Edit nama dan foto profil (tersimpan di Hive).
+- **Reactive Updates**: Perubahan profil langsung terupdate di seluruh aplikasi (Home & Settings) tanpa refresh.
+- **Bantuan & Dukungan**: Halaman kontak support via email langsung.
+- **Tentang Aplikasi**: Informasi versi dan credit pengembang.
+- **Automated Offline Mode**: Deteksi koneksi otomatis di background.
+
+### Fixed
+- **Startup Freeze**: Perbaikan aplikasi macet di splash screen (optimasi `ConnectivityService`).
+- **Calendar Crash**: Perbaikan error "Bad State" saat menambah jadwal.
+- **UI Glitches**: Perbaikan `use_build_context_synchronously` warnings.
+
+---
+
 ## [0.3.0] - 2024-12-31
 
 ### 🎉 Major Architecture Refactor & Smart Features

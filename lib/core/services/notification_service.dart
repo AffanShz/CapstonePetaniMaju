@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:petani_maju/core/services/cache_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -135,6 +136,16 @@ class NotificationService {
         platformDetails,
         payload: payload,
       );
+
+      // Save to history
+      await CacheService().saveNotification({
+        'id': id,
+        'title': title,
+        'body': body,
+        'timestamp': DateTime.now().toIso8601String(),
+        'payload': payload,
+        'isRead': false,
+      });
     } catch (e) {
       if (kDebugMode) print("Show notification failed: $e");
     }
@@ -168,12 +179,14 @@ class NotificationService {
         if (now.difference(finalScheduledDate).inMinutes < 5) {
           // Jika kurang dari 5 menit yang lalu, tampilkan sekarang
           finalScheduledDate = now.add(const Duration(seconds: 5));
-          if (kDebugMode)
+          if (kDebugMode) {
             print('   ⚡ Adjusted to: $finalScheduledDate (was in past <5min)');
+          }
         } else {
-          if (kDebugMode)
+          if (kDebugMode) {
             print(
                 '   ❌ SKIPPED: Time already passed by ${now.difference(finalScheduledDate).inMinutes} minutes');
+          }
           return;
         }
       }
@@ -204,7 +217,15 @@ class NotificationService {
             UILocalNotificationDateInterpretation.absoluteTime,
       );
 
-      if (kDebugMode) print('   ✅ Notification $id scheduled successfully!');
+      // Save to history (with future timestamp)
+      await CacheService().saveNotification({
+        'id': id,
+        'title': title,
+        'body': body,
+        'timestamp': finalScheduledDate.toIso8601String(),
+        'payload': 'scheduled',
+        'isRead': false,
+      });
     } catch (e) {
       if (kDebugMode) print("❌ Schedule failed for ID $id: $e");
     }
@@ -212,6 +233,7 @@ class NotificationService {
 
   Future<void> cancelNotification(int id) async {
     await _notificationsPlugin.cancel(id);
+    await CacheService().removeNotification(id);
     if (kDebugMode) print('🗑️ Notification $id cancelled');
   }
 

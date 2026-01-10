@@ -9,6 +9,7 @@ import 'package:petani_maju/features/calendar/bloc/calendar_bloc.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
 import 'package:petani_maju/core/services/notification_scheduler.dart';
 import 'package:petani_maju/widgets/custom_time_picker.dart';
+import 'package:petani_maju/core/constants/monthly_activities.dart';
 
 // ==========================================
 // 1. WIDGET PICKER JAM DENGAN TOMBOL
@@ -246,7 +247,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       .add(SelectDate(date: selectedDay));
                 },
                 onPageChanged: (focusedDay) {
-                  // Just update local format, bloc handles date state
+                  context
+                      .read<CalendarBloc>()
+                      .add(PageChanged(focusedDay: focusedDay));
                 },
                 calendarStyle: CalendarStyle(
                   todayDecoration: BoxDecoration(
@@ -452,45 +455,67 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildRecommendationCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2E7D32),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.spa, color: Colors.white, size: 24),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Persiapan Musim Tanam',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+    return BlocBuilder<CalendarBloc, CalendarState>(
+      builder: (context, state) {
+        int currentMonth = DateTime.now().month;
+        if (state is CalendarLoaded) {
+          currentMonth = state.focusedDate.month;
+        }
+
+        final activities = MonthlyActivities.getData()[currentMonth] ??
+            MonthlyActivities.getData()[1]!;
+
+        final title = activities['title'] as String;
+        final items = activities['items'] as List<String>;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2E7D32),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildRecommendationItem(
-              'Pengolahan lahan untuk musim tanam berikutnya'),
-          const SizedBox(height: 8),
-          _buildRecommendationItem('Persiapan bibit unggul'),
-          const SizedBox(height: 8),
-          _buildRecommendationItem('Perbaikan sistem irigasi'),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.spa, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ...items.map((item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: _buildRecommendationItem(item),
+                  )),
+            ],
+          ),
+        );
+      },
     );
   }
 

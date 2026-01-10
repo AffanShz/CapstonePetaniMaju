@@ -37,8 +37,8 @@ class MainWeatherCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
               color: Colors.green.withValues(alpha: 0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 10))
+              blurRadius: 10,
+              offset: const Offset(2, 5))
         ],
       ),
       child: Column(
