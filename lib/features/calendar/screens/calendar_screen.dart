@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:petani_maju/features/calendar/bloc/calendar_bloc.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
@@ -103,8 +104,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               time,
             );
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Jadwal berhasil ditambah dengan pengingat!'),
+              SnackBar(
+                content: Text('calendar.add_success'.tr()),
                 backgroundColor: Colors.green,
               ),
             );
@@ -126,8 +127,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
             );
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Jadwal berhasil diperbarui!'),
+              SnackBar(
+                content: Text('calendar.update_success'.tr()),
                 backgroundColor: Colors.blue,
               ),
             );
@@ -176,7 +177,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     onPressed: () {
                       context.read<CalendarBloc>().add(LoadSchedules());
                     },
-                    child: const Text('Coba Lagi'),
+                    child: Text('common.retry'.tr()),
                   ),
                 ],
               ),
@@ -197,10 +198,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. HEADER
-            const Center(
+            Center(
               child: Text(
-                'Kalender Tanam',
-                style: TextStyle(
+                'calendar.title'.tr(),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -231,6 +232,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 selectedDayPredicate: (day) =>
                     isSameDay(state.selectedDate, day),
                 eventLoader: (day) => state.getEventsForDay(day),
+                locale: context.locale.languageCode, // Set locale for calendar
                 headerStyle: const HeaderStyle(
                   titleCentered: true,
                   formatButtonVisible: false,
@@ -277,9 +279,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
             const SizedBox(height: 24),
 
             // 3. KEGIATAN HARI INI
-            const Text(
-              'Kegiatan Hari Ini',
-              style: TextStyle(
+            Text(
+              'calendar.today_activities'.tr(),
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -292,9 +294,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
             const SizedBox(height: 24),
 
             // 4. REKOMENDASI AKTIVITAS
-            const Text(
-              'Rekomendasi Aktivitas Bulan Ini',
-              style: TextStyle(
+            Text(
+              'calendar.monthly_recommendations'.tr(),
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -328,7 +330,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             Icon(Icons.event_busy, size: 48, color: Colors.grey[300]),
             const SizedBox(height: 12),
             Text(
-              'Tidak ada jadwal tanam.',
+              'calendar.no_schedule'.tr(),
               style: TextStyle(color: Colors.grey[500]),
             ),
           ],
@@ -546,11 +548,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Hapus Jadwal?'),
-        content: const Text('Data yang dihapus tidak dapat dikembalikan.'),
+        title: Text('calendar.delete_title'.tr()),
+        content: Text('calendar.delete_confirm'.tr()),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('common.cancel'.tr())),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -565,7 +568,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               await notif.cancelNotification(id * 10 + 2);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
+            child: Text('common.delete'.tr(),
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -630,7 +634,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      isEdit ? 'Ubah Jadwal' : 'Tambah Jadwal Baru',
+                      isEdit
+                          ? 'calendar.edit_schedule'.tr()
+                          : 'calendar.add_schedule'.tr(),
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -640,21 +646,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     const SizedBox(height: 24),
                     _buildModernInput(
                       controller: nameController,
-                      label: 'Tanam apa?',
+                      label: 'calendar.plant_name_label'.tr(),
                       icon: Icons.eco_outlined,
-                      hint: 'Misal: Padi, Jagung',
+                      hint: 'calendar.plant_name_hint'.tr(),
                     ),
                     const SizedBox(height: 16),
                     _buildModernInput(
                       controller: noteController,
-                      label: 'Catatan tambahan',
+                      label: 'calendar.note_label'.tr(),
                       icon: Icons.note_alt_outlined,
-                      hint: 'Misal: Pupuk kandang',
+                      hint: 'calendar.note_hint'.tr(),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      "Pilih Waktu Kegiatan",
-                      style: TextStyle(
+                    Text(
+                      "calendar.time_label".tr(),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
@@ -686,8 +692,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               foregroundColor: Colors.grey[600],
                             ),
-                            child: const Text('Batal',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text('common.cancel'.tr(),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -767,9 +774,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: const Text(
-                              'Simpan Jadwal',
-                              style: TextStyle(
+                            child: Text(
+                              'calendar.save_schedule'.tr(),
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),

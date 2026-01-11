@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:petani_maju/logic/app_lifecycle/app_bloc.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -15,39 +16,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingContent> _contents = [
     OnboardingContent(
-      title: "Selamat Datang di Petani Maju",
-      description:
-          "Aplikasi asisten pintar untuk membantu pertanian Anda lebih produktif dan efisien.",
-      icon: Icons.agriculture,
-      color: Colors.green,
+      title: "onboarding.page1_title".tr(),
+      description: "onboarding.page1_desc".tr(),
+      imagePath: 'assets/images/onboarding_welcome.png',
     ),
     OnboardingContent(
-      title: "Cuaca & Prediksi",
-      description:
-          "Dapatkan informasi cuaca terkini dan prediksi 7 hari ke depan untuk merencanakan aktivitas pertanian.",
-      icon: Icons.cloud,
-      color: Colors.blue,
+      title: "onboarding.page2_title".tr(),
+      description: "onboarding.page2_desc".tr(),
+      imagePath: 'assets/images/onboarding_weather.png',
     ),
     OnboardingContent(
-      title: "Deteksi Hama",
-      description:
-          "Identifikasi hama tanaman dengan mudah dan dapatkan solusi penanganannya.",
-      icon: Icons.bug_report,
-      color: Colors.redAccent,
+      title: "onboarding.page3_title".tr(),
+      description: "onboarding.page3_desc".tr(),
+      imagePath: 'assets/images/onboarding_pests.png',
     ),
     OnboardingContent(
-      title: "Kalender Tanam",
-      description:
-          "Atur jadwal tanam, penyiraman, dan pemupukan agar tidak ada yang terlewat.",
-      icon: Icons.calendar_month,
-      color: Colors.orange,
+      title: "onboarding.page4_title".tr(),
+      description: "onboarding.page4_desc".tr(),
+      imagePath: 'assets/images/onboarding_calendar.png',
     ),
     OnboardingContent(
-      title: "Tips Pertanian",
-      description:
-          "Akses berbagai tips dan panduan praktis untuk meningkatkan hasil panen Anda.",
-      icon: Icons.lightbulb,
-      color: Colors.amber,
+      title: "onboarding.page5_title".tr(),
+      description: "onboarding.page5_desc".tr(),
+      imagePath: 'assets/images/onboarding_tips.png',
     ),
   ];
 
@@ -117,8 +108,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       child: Text(
                         _currentPage == _contents.length - 1
-                            ? "Mulai Sekarang"
-                            : "Lanjut",
+                            ? "onboarding.start".tr()
+                            : "onboarding.next".tr(),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -133,7 +124,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         context.read<AppBloc>().add(CompleteOnboarding());
                       },
                       child: Text(
-                        "Lewati",
+                        "onboarding.skip".tr(),
                         style: TextStyle(color: Colors.grey.shade600),
                       ),
                     ),
@@ -160,17 +151,9 @@ class OnboardingPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: content.color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              content.icon,
-              size: 100,
-              color: content.color,
-            ),
+          Image.asset(
+            content.imagePath,
+            height: 250,
           ),
           const SizedBox(height: 48),
           Text(
@@ -200,13 +183,11 @@ class OnboardingPage extends StatelessWidget {
 class OnboardingContent {
   final String title;
   final String description;
-  final IconData icon;
-  final Color color;
+  final String imagePath;
 
   OnboardingContent({
     required this.title,
     required this.description,
-    required this.icon,
-    required this.color,
+    required this.imagePath,
   });
 }

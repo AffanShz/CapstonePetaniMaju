@@ -61,6 +61,8 @@ lib/
 │   ├── home/                  # Fitur home screen
 │   │   ├── screens/
 │   │   └── widgets/
+│   │       ├── home_skeleton.dart # Loading skeleton UI
+│   │       └── ...
 │   ├── pests/                 # Fitur hama & penyakit
 │   │   └── screens/
 │   ├── settings/              # Fitur pengaturan
@@ -260,6 +262,12 @@ Halaman pengaturan aplikasi yang mencakup:
 - **Notifikasi**: Pengaturan granular untuk alert cuaca dan jadwal.
 - **Bantuan & Dukungan**: Direct email support.
 - **Tentang Aplikasi**: Informasi versi.
+- **Bahasa**: Pengaturan bahasa aplikasi (Indonesia / English).
+
+### Localization
+Menggunakan `easy_localization` untuk manajemen bahasa. File terjemahan berupa JSON yang tersimpan di `assets/translations/`:
+- `id.json` (Bahasa Indonesia)
+- `en.json` (English)
 
 ---
 
@@ -292,6 +300,14 @@ Bottom navigation bar dengan 4 tab:
 ### SectionHeader (`section_header.dart`)
 
 Header untuk setiap section dengan styling konsisten.
+
+### SkeletonContainer (`skeleton_container.dart`)
+
+Widget dasar untuk membuat loading placeholder dengan efek shimmer.
+
+### HomeSkeleton (`home_skeleton.dart`)
+
+Placeholder UI khusus untuk Home Screen saat data sedang dimuat.
 
 ---
 

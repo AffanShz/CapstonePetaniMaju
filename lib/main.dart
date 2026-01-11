@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 // Core Services
 import 'package:petani_maju/core/services/cache_service.dart';
@@ -36,6 +37,7 @@ bool appStartedOffline = false;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
 
   await dotenv.load(fileName: ".env");
 
@@ -65,7 +67,15 @@ Future<void> main() async {
     CacheService().setOfflineMode(true);
   }
 
-  runApp(const MainApp());
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('id'), Locale('en')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('id'),
+      startLocale: const Locale('id'),
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -118,6 +128,9 @@ class MainApp extends StatelessWidget {
         child: MaterialApp(
           title: 'Petani Maju',
           debugShowCheckedModeBanner: false,
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
             scaffoldBackgroundColor: const Color(0xFFF8F9FA),

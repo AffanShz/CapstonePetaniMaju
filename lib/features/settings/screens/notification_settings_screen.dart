@@ -1,6 +1,7 @@
 // lib/features/settings/screens/notification_settings_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:petani_maju/core/constants/colors.dart';
 import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/core/services/notification_scheduler.dart';
@@ -65,14 +66,14 @@ class _NotificationSettingsScreenState
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text(
-          'Pengaturan Notifikasi',
-          style: TextStyle(
+        title: Text(
+          'notifications.title'.tr(),
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w500,
           ),
         ),
-        centerTitle: false,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
@@ -85,13 +86,13 @@ class _NotificationSettingsScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Morning Briefing Section
-              _buildSectionTitle('CUACA HARIAN'),
+              _buildSectionTitle('notifications.section_daily_weather'.tr()),
               const SizedBox(height: 8),
               _buildSettingsCard([
                 _buildSwitchTile(
                   icon: Icons.wb_sunny_outlined,
-                  title: 'Cuaca Pagi',
-                  subtitle: 'Info cuaca setiap pagi',
+                  title: 'notifications.morning_weather'.tr(),
+                  subtitle: 'notifications.morning_weather_desc'.tr(),
                   value: _settings.morningBriefingEnabled,
                   onChanged: (value) {
                     _updateSettings(
@@ -101,7 +102,7 @@ class _NotificationSettingsScreenState
                 if (_settings.morningBriefingEnabled) ...[
                   _buildDivider(),
                   _buildTimePicker(
-                    title: 'Waktu Notifikasi',
+                    title: 'notifications.notification_time'.tr(),
                     hour: _settings.morningBriefingHour,
                     minute: _settings.morningBriefingMinute,
                     onChanged: (hour, minute) {
@@ -116,13 +117,13 @@ class _NotificationSettingsScreenState
               const SizedBox(height: 24),
 
               // Weather Alerts Section
-              _buildSectionTitle('PERINGATAN CUACA'),
+              _buildSectionTitle('notifications.section_weather_alerts'.tr()),
               const SizedBox(height: 8),
               _buildSettingsCard([
                 _buildSwitchTile(
                   icon: Icons.water_drop_outlined,
-                  title: 'Hujan Deras',
-                  subtitle: 'Peringatan saat hujan deras',
+                  title: 'notifications.heavy_rain'.tr(),
+                  subtitle: 'notifications.heavy_rain_desc'.tr(),
                   value: _settings.heavyRainAlertEnabled,
                   onChanged: (value) {
                     _updateSettings(
@@ -132,8 +133,8 @@ class _NotificationSettingsScreenState
                 _buildDivider(),
                 _buildSwitchTile(
                   icon: Icons.air_outlined,
-                  title: 'Angin Kencang',
-                  subtitle: 'Peringatan angin >10 m/s',
+                  title: 'notifications.strong_wind'.tr(),
+                  subtitle: 'notifications.strong_wind_desc'.tr(),
                   value: _settings.strongWindAlertEnabled,
                   onChanged: (value) {
                     _updateSettings(
@@ -143,8 +144,8 @@ class _NotificationSettingsScreenState
                 _buildDivider(),
                 _buildSwitchTile(
                   icon: Icons.flash_on_outlined,
-                  title: 'Petir',
-                  subtitle: 'Peringatan hujan petir',
+                  title: 'notifications.thunderstorm'.tr(),
+                  subtitle: 'notifications.thunderstorm_desc'.tr(),
                   value: _settings.thunderstormAlertEnabled,
                   onChanged: (value) {
                     _updateSettings(
@@ -155,13 +156,14 @@ class _NotificationSettingsScreenState
               const SizedBox(height: 24),
 
               // Farming Reminders Section
-              _buildSectionTitle('PENGINGAT PERTANIAN'),
+              _buildSectionTitle(
+                  'notifications.section_farming_reminders'.tr()),
               const SizedBox(height: 8),
               _buildSettingsCard([
                 _buildSwitchTile(
                   icon: Icons.science_outlined,
-                  title: 'Pemupukan',
-                  subtitle: 'Pengingat jadwal pupuk',
+                  title: 'notifications.fertilization'.tr(),
+                  subtitle: 'notifications.fertilization_desc'.tr(),
                   value: _settings.fertilizationReminderEnabled,
                   onChanged: (value) {
                     _updateSettings(_settings.copyWith(
@@ -171,8 +173,8 @@ class _NotificationSettingsScreenState
                 _buildDivider(),
                 _buildSwitchTile(
                   icon: Icons.opacity_outlined,
-                  title: 'Penyiraman Cerdas',
-                  subtitle: 'Pengingat jika tidak hujan 2+ hari',
+                  title: 'notifications.smart_watering'.tr(),
+                  subtitle: 'notifications.smart_watering_desc'.tr(),
                   value: _settings.smartWateringEnabled,
                   onChanged: (value) {
                     _updateSettings(
@@ -182,8 +184,8 @@ class _NotificationSettingsScreenState
                 _buildDivider(),
                 _buildSwitchTile(
                   icon: Icons.bug_report_outlined,
-                  title: 'Peringatan Hama',
-                  subtitle: 'Waspada hama berdasarkan cuaca',
+                  title: 'notifications.pest_warning'.tr(),
+                  subtitle: 'notifications.pest_warning_desc'.tr(),
                   value: _settings.pestWarningEnabled,
                   onChanged: (value) {
                     _updateSettings(
@@ -194,13 +196,14 @@ class _NotificationSettingsScreenState
               const SizedBox(height: 24),
 
               // Calendar Reminders Section
-              _buildSectionTitle('PENGINGAT KALENDER'),
+              _buildSectionTitle(
+                  'notifications.section_calendar_reminders'.tr()),
               const SizedBox(height: 8),
               _buildSettingsCard([
                 _buildSwitchTile(
                   icon: Icons.event_outlined,
-                  title: '1 Hari Sebelum',
-                  subtitle: 'Pengingat H-1 kegiatan',
+                  title: 'notifications.calendar_1day'.tr(),
+                  subtitle: 'notifications.calendar_1day_desc'.tr(),
                   value: _settings.reminder1DayBefore,
                   onChanged: (value) {
                     _updateSettings(
@@ -210,8 +213,8 @@ class _NotificationSettingsScreenState
                 _buildDivider(),
                 _buildSwitchTile(
                   icon: Icons.schedule_outlined,
-                  title: '1 Jam Sebelum',
-                  subtitle: 'Pengingat 1 jam sebelum',
+                  title: 'notifications.calendar_1hour'.tr(),
+                  subtitle: 'notifications.calendar_1hour_desc'.tr(),
                   value: _settings.reminder1HourBefore,
                   onChanged: (value) {
                     _updateSettings(
@@ -221,8 +224,8 @@ class _NotificationSettingsScreenState
                 _buildDivider(),
                 _buildSwitchTile(
                   icon: Icons.notifications_active_outlined,
-                  title: 'Saat Waktu Kegiatan',
-                  subtitle: 'Notifikasi tepat waktu',
+                  title: 'notifications.calendar_ontime'.tr(),
+                  subtitle: 'notifications.calendar_ontime_desc'.tr(),
                   value: _settings.reminderAtTime,
                   onChanged: (value) {
                     _updateSettings(_settings.copyWith(reminderAtTime: value));
@@ -232,13 +235,13 @@ class _NotificationSettingsScreenState
               const SizedBox(height: 24),
 
               // Quiet Mode Section
-              _buildSectionTitle('MODE TENANG'),
+              _buildSectionTitle('notifications.section_quiet_mode'.tr()),
               const SizedBox(height: 8),
               _buildSettingsCard([
                 _buildSwitchTile(
                   icon: Icons.do_not_disturb_on_outlined,
-                  title: 'Mode Tenang',
-                  subtitle: 'Nonaktifkan notifikasi sementara',
+                  title: 'notifications.quiet_mode'.tr(),
+                  subtitle: 'notifications.quiet_mode_desc'.tr(),
                   value: _settings.quietModeEnabled,
                   onChanged: (value) {
                     _updateSettings(
@@ -386,7 +389,7 @@ class _NotificationSettingsScreenState
               await showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Pilih Waktu'),
+                  title: Text('common.select_time'.tr()),
                   backgroundColor: Colors.white,
                   surfaceTintColor: Colors.white,
                   content: Column(
@@ -406,7 +409,7 @@ class _NotificationSettingsScreenState
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Batal'),
+                      child: Text('common.cancel'.tr()),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -417,7 +420,7 @@ class _NotificationSettingsScreenState
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Simpan'),
+                      child: Text('common.save'.tr()),
                     ),
                   ],
                 ),
@@ -466,9 +469,9 @@ class _NotificationSettingsScreenState
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Jam Tenang',
-                style: TextStyle(
+              Text(
+                'notifications.quiet_hours'.tr(),
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -480,7 +483,7 @@ class _NotificationSettingsScreenState
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildHourSelector(
-                label: 'Dari',
+                label: 'notifications.from'.tr(),
                 hour: _settings.quietStartHour,
                 onTap: () async {
                   TimeOfDay tempTime =
@@ -488,7 +491,7 @@ class _NotificationSettingsScreenState
                   await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Mulai Jam Tenang'),
+                      title: Text('notifications.start_quiet_hours'.tr()),
                       backgroundColor: Colors.white,
                       surfaceTintColor: Colors.white,
                       content: Column(
@@ -508,7 +511,7 @@ class _NotificationSettingsScreenState
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Batal'),
+                          child: Text('common.cancel'.tr()),
                         ),
                         ElevatedButton(
                           onPressed: () {
@@ -520,7 +523,7 @@ class _NotificationSettingsScreenState
                             backgroundColor: AppColors.primaryGreen,
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('Simpan'),
+                          child: Text('common.save'.tr()),
                         ),
                       ],
                     ),
@@ -532,7 +535,7 @@ class _NotificationSettingsScreenState
                 child: Icon(Icons.arrow_forward, color: Colors.grey),
               ),
               _buildHourSelector(
-                label: 'Sampai',
+                label: 'notifications.to'.tr(),
                 hour: _settings.quietEndHour,
                 onTap: () async {
                   TimeOfDay tempTime =
@@ -540,7 +543,7 @@ class _NotificationSettingsScreenState
                   await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Akhir Jam Tenang'),
+                      title: Text('notifications.end_quiet_hours'.tr()),
                       backgroundColor: Colors.white,
                       surfaceTintColor: Colors.white,
                       content: Column(
@@ -560,7 +563,7 @@ class _NotificationSettingsScreenState
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Batal'),
+                          child: Text('common.cancel'.tr()),
                         ),
                         ElevatedButton(
                           onPressed: () {
@@ -572,7 +575,7 @@ class _NotificationSettingsScreenState
                             backgroundColor: AppColors.primaryGreen,
                             foregroundColor: Colors.white,
                           ),
-                          child: const Text('Simpan'),
+                          child: Text('common.save'.tr()),
                         ),
                       ],
                     ),

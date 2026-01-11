@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:petani_maju/core/constants/colors.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HelpSupportScreen extends StatelessWidget {
@@ -7,8 +8,8 @@ class HelpSupportScreen extends StatelessWidget {
 
   Future<void> _sendEmail(BuildContext context) async {
     const String email = '111202415784@mhs.dinus.ac.id';
-    const String subject = 'Bantuan Aplikasi Petani Maju';
-    const String body = 'Halo Tim Support,\n\nSaya ingin bertanya mengenai...';
+    final String subject = 'help.email_subject'.tr();
+    final String body = 'help.email_body'.tr();
 
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
@@ -25,8 +26,8 @@ class HelpSupportScreen extends StatelessWidget {
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tidak dapat membuka aplikasi email.'),
+            SnackBar(
+              content: Text('help.email_error'.tr()),
               backgroundColor: Colors.red,
             ),
           );
@@ -36,7 +37,7 @@ class HelpSupportScreen extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Terjadi kesalahan: $e'),
+            content: Text('${'common.error_prefix'.tr()}$e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -55,9 +56,9 @@ class HelpSupportScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Bantuan & Dukungan',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          'settings.help'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -69,18 +70,18 @@ class HelpSupportScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Hubungi Kami',
-              style: TextStyle(
+            Text(
+              'help.contact_us'.tr(),
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Jika Anda mengalami kendala atau memiliki pertanyaan seputar aplikasi Petani Maju, tim kami siap membantu Anda.',
-              style: TextStyle(
+            Text(
+              'help.contact_desc'.tr(),
+              style: const TextStyle(
                 fontSize: 14,
                 color: Colors.grey,
                 height: 1.5,
@@ -116,18 +117,18 @@ class HelpSupportScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Kirim Email ke Support',
-                    style: TextStyle(
+                  Text(
+                    'help.email_support_title'.tr(),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Kami biasanya membalas dalam waktu 24 jam.',
+                  Text(
+                    'help.email_support_desc'.tr(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.grey,
                       fontSize: 14,
                     ),
@@ -146,9 +147,9 @@ class HelpSupportScreen extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Kirim Email Sekarang',
-                        style: TextStyle(
+                      child: Text(
+                        'help.send_email_button'.tr(),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -159,10 +160,10 @@ class HelpSupportScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 48),
-            const Center(
+            Center(
               child: Text(
-                'Versi Aplikasi 1.0.0',
-                style: TextStyle(
+                'common.app_version'.tr(),
+                style: const TextStyle(
                   color: Colors.grey,
                   fontSize: 12,
                 ),

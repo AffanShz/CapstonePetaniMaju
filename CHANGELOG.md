@@ -11,9 +11,27 @@ dan proyek ini mengikuti [Semantic Versioning](https://semver.org/lang/id/).
 
 ### Planned
 - Notifikasi push untuk peringatan cuaca
-- Multi-language support
 - Profil pengguna dengan sinkronisasi cloud
 - Marketplace hasil tani
+
+---
+
+## [0.5.0] - 2026-01-11
+
+### 🌍 Localization & UI Polish
+
+Rilis ini menghadirkan dukungan multi-bahasa (Indonesia & Inggris) dan peningkatan pengalaman pengguna saat loading data.
+
+### Added
+- **Multi-language Support**: Implementasi `easy_localization` untuk dukungan Bahasa Indonesia dan Inggris.
+- **Skeleton Loading**: Animasi loading shimmer pada Home Screen untuk pengalaman visual yang lebih halus.
+- **Skeleton Components**: Widget reusable `SkeletonContainer` dan `HomeSkeleton`.
+- **Weather Localization**: Penyesuaian terjemahan hari ("Hari Ini", "Today") pada widget cuaca.
+
+### Changed
+- **Home Screen Loading**: Mengganti `CircularProgressIndicator` dengan Skeleton UI.
+- **Custom App Bar**: Menyesuaikan teks header dan status sinkronisasi agar mendukung multi-bahasa.
+- **Header Section**: Perbaikan bug konstanta pada widget `SectionHeader`.
 
 ---
 
@@ -37,7 +55,7 @@ Rilis ini berfokus pada manajemen profil pengguna, dukungan teknis, dan perbaika
 
 ---
 
-## [0.3.0] - 2024-12-31
+## [0.3.0] - 2025-12-31
 
 ### 🎉 Major Architecture Refactor & Smart Features
 
@@ -82,7 +100,7 @@ Rilis besar yang mengubah arsitektur aplikasi menjadi lebih scalable menggunakan
 
 ---
 
-## [0.2.0] - 2024-12-21
+## [0.2.0] - 2025-12-21
 
 ### 🎉 Offline Mode & Stability Update
 
@@ -99,7 +117,7 @@ Rilis yang berfokus pada stabilitas dan dukungan offline untuk pengalaman penggu
 
 ---
 
-## [0.1.0] - 2024-12-17
+## [0.1.0] - 2025-12-17
 
 ### 🎉 Initial Release
 
@@ -115,6 +133,8 @@ Rilis pertama aplikasi Petani Maju dengan fitur dasar:
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 0.5.0 | 2026-01-11 | Localization & UI Polish |
+| 0.4.0 | 2026-01-11 | UX & Profile Management |
 | 0.3.0 | 2024-12-31 | BLoC Refactor & Smart Notifications |
 | 0.2.0 | 2024-12-21 | Offline Mode & Stability |
 | 0.1.0 | 2024-12-17 | Initial Release |

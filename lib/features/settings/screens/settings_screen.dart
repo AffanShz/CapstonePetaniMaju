@@ -8,6 +8,7 @@ import 'package:petani_maju/features/settings/screens/notification_settings_scre
 import 'package:petani_maju/features/settings/screens/help_support_screen.dart';
 import 'package:petani_maju/features/settings/screens/about_app_screen.dart';
 import 'package:petani_maju/core/services/connectivity_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:async';
 
 class SettingsScreen extends StatefulWidget {
@@ -79,8 +80,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(value
-              ? 'Mode Offline aktif - Hanya menggunakan data cache'
-              : 'Mode Online aktif - Mengambil data terbaru'),
+              ? 'settings.offline_active'.tr()
+              : 'settings.online_active'.tr()),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -93,14 +94,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text(
-          'Pengaturan',
-          style: TextStyle(
+        title: Text(
+          'settings.title'.tr(),
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w500,
           ),
         ),
-        centerTitle: false,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -113,12 +114,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
 
               // AKUN Section
-              _buildSectionTitle('AKUN'),
+              _buildSectionTitle('settings.account_section'.tr()),
               const SizedBox(height: 8),
               _buildSettingsCard([
                 _buildSettingsTile(
                   icon: Icons.person_outline,
-                  title: 'Profil Saya',
+                  title: 'settings.profile'.tr(),
                   onTap: () async {
                     final result = await Navigator.push(
                       context,
@@ -134,12 +135,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
 
               // PREFERENSI Section
-              _buildSectionTitle('PREFERENSI'),
+              _buildSectionTitle('settings.preferences_section'.tr()),
               const SizedBox(height: 8),
               _buildSettingsCard([
                 _buildSettingsTile(
                   icon: Icons.notifications_outlined,
-                  title: 'Notifikasi',
+                  title: 'settings.notification_menu'.tr(),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -153,14 +154,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildDivider(),
                 _buildSettingsTile(
                   icon: Icons.language_outlined,
-                  title: 'Bahasa',
-                  subtitle: 'Indonesia',
-                  onTap: () {},
+                  title: 'settings.language'.tr(),
+                  subtitle: context.locale.languageCode == 'id'
+                      ? 'Indonesia'
+                      : 'English',
+                  onTap: () {
+                    _showLanguageModal(context);
+                  },
                 ),
                 _buildDivider(),
                 _buildSettingsTileWithSwitch(
                   icon: Icons.cloud_off_outlined,
-                  title: 'Mode Offline',
+                  title: 'settings.offline_mode'.tr(),
                   value: _offlineMode,
                   onChanged: _toggleOfflineMode,
                 ),
@@ -168,12 +173,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
 
               // TENTANG Section
-              _buildSectionTitle('TENTANG'),
+              _buildSectionTitle('settings.about_section'.tr()),
               const SizedBox(height: 8),
               _buildSettingsCard([
                 _buildSettingsTile(
                   icon: null,
-                  title: 'Bantuan & Dukungan',
+                  title: 'settings.help'.tr(),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -186,7 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildDivider(),
                 _buildSettingsTile(
                   icon: null,
-                  title: 'Tentang Aplikasi',
+                  title: 'settings.about'.tr(),
                   subtitle: 'v1.0.0',
                   onTap: () {
                     Navigator.push(
@@ -376,6 +381,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
       indent: 16,
       endIndent: 16,
       color: Colors.grey.shade200,
+    );
+  }
+
+  void _showLanguageModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'settings.language'.tr(),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Text('🇮🇩', style: TextStyle(fontSize: 24)),
+                title: const Text('Indonesia'),
+                trailing: context.locale.languageCode == 'id'
+                    ? const Icon(Icons.check, color: AppColors.primaryGreen)
+                    : null,
+                onTap: () {
+                  context.setLocale(const Locale('id'));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Text('🇺🇸', style: TextStyle(fontSize: 24)),
+                title: const Text('English'),
+                trailing: context.locale.languageCode == 'en'
+                    ? const Icon(Icons.check, color: AppColors.primaryGreen)
+                    : null,
+                onTap: () {
+                  context.setLocale(const Locale('en'));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

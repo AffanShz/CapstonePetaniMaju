@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class DailyForecastWidget extends StatelessWidget {
   final List<dynamic> dailyData;
@@ -40,21 +41,23 @@ class DailyForecastWidget extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           ...dailyData.asMap().entries.map((entry) {
-            return _buildDayRow(entry.value);
+            return _buildDayRow(context, entry.value);
           }),
         ],
       ),
     );
   }
 
-  Widget _buildDayRow(Map<String, dynamic> day) {
+  Widget _buildDayRow(BuildContext context, Map<String, dynamic> day) {
     final DateTime date = day['date'];
     final bool isToday = date.day == DateTime.now().day &&
         date.month == DateTime.now().month &&
         date.year == DateTime.now().year;
-    final String dayName =
-        isToday ? 'Hari Ini' : DateFormat('EEEE', 'id_ID').format(date);
-    final String dateText = DateFormat('d MMM', 'id_ID').format(date);
+    final String dayName = isToday
+        ? 'common.today'.tr()
+        : DateFormat('EEEE', context.locale.toString()).format(date);
+    final String dateText =
+        DateFormat('d MMM', context.locale.toString()).format(date);
 
     final double pop =
         day['pop'] != null ? (day['pop'] as num).toDouble() * 100 : 0;

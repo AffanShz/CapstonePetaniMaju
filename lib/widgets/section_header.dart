@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:petani_maju/core/constants/colors.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
-  final String actionText;
+  final String? actionText;
   final VoidCallback? onActionTap;
 
   const SectionHeader({
     super.key,
     required this.title,
-    this.actionText = 'Lihat Semua',
+    this.actionText,
     this.onActionTap,
   });
 
@@ -30,7 +31,7 @@ class SectionHeader extends StatelessWidget {
           child: Row(
             children: [
               Text(
-                actionText,
+                actionText ?? 'home.see_all'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
