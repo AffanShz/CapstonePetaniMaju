@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:petani_maju/features/home/widgets/quick_access_item.dart';
 import 'package:petani_maju/features/weather/screens/weather_detail_screen.dart';
 import 'package:petani_maju/features/pests/screens/pest_screen.dart';
@@ -11,9 +12,9 @@ class QuickAccess extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Akses Cepat',
-          style: TextStyle(
+        Text(
+          'home.quick_access'.tr(),
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -24,8 +25,8 @@ class QuickAccess extends StatelessWidget {
             Expanded(
               child: QuickAccessItem(
                 icon: Icons.cloud_outlined,
-                title: 'Cuaca',
-                subtitle: 'Prakiraan 7 hari',
+                title: 'home.menu_weather'.tr(),
+                subtitle: 'Prakiraan 7 hari', // Bisa ditambahkan key jika perlu
                 iconColor: const Color(0xFF2196F3), // Blue
                 backgroundColor: const Color(0xFFE3F2FD), // Light blue
                 onTap: () {
@@ -42,8 +43,8 @@ class QuickAccess extends StatelessWidget {
             Expanded(
               child: QuickAccessItem(
                 icon: Icons.bug_report_outlined,
-                title: 'Info Hama',
-                subtitle: 'Penyakit tanaman',
+                title: 'home.menu_pests'.tr(),
+                subtitle: 'Penyakit tanaman', // Bisa ditambahkan key jika perlu
                 iconColor: Colors.red, // Red
                 backgroundColor: Colors.red.shade50, // Light red
                 onTap: () {

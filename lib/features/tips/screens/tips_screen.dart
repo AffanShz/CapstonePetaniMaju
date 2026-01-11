@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:petani_maju/features/tips/bloc/tips_bloc.dart';
 import 'package:petani_maju/features/tips/screens/tips_detail_screen.dart';
@@ -13,26 +14,21 @@ class TipsScreen extends StatefulWidget {
 }
 
 class _TipsScreenState extends State<TipsScreen> {
-  String _selectedCategory = 'Semua';
+  final TextEditingController _searchController = TextEditingController();
 
-  void _onCategorySelected(String category) {
-    setState(() {
-      _selectedCategory = category;
-    });
-  }
-
-  List<Map<String, dynamic>> _filterTips(List<Map<String, dynamic>> tips) {
-    if (_selectedCategory == 'Semua') {
-      return tips;
-    }
-    return tips.where((tip) => tip['category'] == _selectedCategory).toList();
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tips Pertanian'),
+        title: Text('tips.title'.tr()),
+        backgroundColor: Colors.white,
+        centerTitle: true,
       ),
       body: BlocBuilder<TipsBloc, TipsState>(
         builder: (context, state) {
@@ -53,7 +49,7 @@ class _TipsScreenState extends State<TipsScreen> {
                     onPressed: () {
                       context.read<TipsBloc>().add(LoadTips());
                     },
-                    child: const Text('Coba Lagi'),
+                    child: Text('common.retry'.tr()),
                   ),
                 ],
               ),
@@ -73,8 +69,20 @@ class _TipsScreenState extends State<TipsScreen> {
                     children: [
                       // Search Bar
                       TextField(
+                        controller:
+                            _searchController, // ... existing controller
+                        onChanged: (value) {
+                          // Debounce
+                          Future.delayed(const Duration(milliseconds: 500), () {
+                            if (_searchController.text == value) {
+                              context
+                                  .read<TipsBloc>()
+                                  .add(SearchTips(query: value));
+                            }
+                          });
+                        },
                         decoration: InputDecoration(
-                          hintText: 'Cari tips...',
+                          hintText: 'common.search'.tr(),
                           prefixIcon: const Icon(Icons.search),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
@@ -92,17 +100,20 @@ class _TipsScreenState extends State<TipsScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            _buildChip('Semua', _selectedCategory == 'Semua'),
-                            _buildChip('Padi', _selectedCategory == 'Padi'),
-                            _buildChip('Jagung', _selectedCategory == 'Jagung'),
-                            _buildChip(
-                                'Nutrisi', _selectedCategory == 'Nutrisi'),
+                            _buildChip(context, 'tips.category_all'.tr(),
+                                'Semua', state.selectedCategory),
+                            _buildChip(context, 'tips.category_padi'.tr(),
+                                'Padi', state.selectedCategory),
+                            _buildChip(context, 'tips.category_jagung'.tr(),
+                                'Jagung', state.selectedCategory),
+                            _buildChip(context, 'tips.category_nutrisi'.tr(),
+                                'Nutrisi', state.selectedCategory),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
                       // Tips Grid
-                      _buildTipsGrid(state.tips),
+                      _buildTipsGrid(state.filteredTips),
                     ],
                   ),
                 ),
@@ -116,14 +127,12 @@ class _TipsScreenState extends State<TipsScreen> {
     );
   }
 
-  Widget _buildTipsGrid(List<Map<String, dynamic>> allTips) {
-    final tips = _filterTips(allTips);
-
+  Widget _buildTipsGrid(List<Map<String, dynamic>> tips) {
     if (tips.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text('Tidak ada tips untuk kategori ini'),
+          padding: const EdgeInsets.all(32),
+          child: Text('tips.empty'.tr()),
         ),
       );
     }
@@ -142,8 +151,8 @@ class _TipsScreenState extends State<TipsScreen> {
         final tip = tips[index];
         return _buildTipCard(
           context,
-          tip['title'] ?? 'Tanpa Judul',
-          tip['category'] ?? 'Umum',
+          tip['title'] ?? 'common.untitled'.tr(),
+          tip['category'] ?? 'Semua',
           tip['image_url'] ?? '',
           tip,
         );
@@ -151,11 +160,15 @@ class _TipsScreenState extends State<TipsScreen> {
     );
   }
 
-  Widget _buildChip(String label, bool isSelected) {
+  Widget _buildChip(BuildContext context, String label, String value,
+      String selectedCategory) {
+    final isSelected = selectedCategory == value;
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: GestureDetector(
-        onTap: () => _onCategorySelected(label),
+        onTap: () {
+          context.read<TipsBloc>().add(FilterTipsByCategory(category: value));
+        },
         child: Chip(
           label: Text(
             label,

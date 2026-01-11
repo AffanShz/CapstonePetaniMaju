@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:petani_maju/features/pests/bloc/pest_bloc.dart';
 import 'package:petani_maju/features/pests/screens/pest_detail_screen.dart';
@@ -30,7 +31,9 @@ class _PestScreenState extends State<PestScreen> {
       )..add(LoadPests()),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Info Hama & Penyakit'),
+          title: Text('pests.title'.tr()),
+          backgroundColor: Colors.white,
+          centerTitle: true,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
@@ -58,7 +61,7 @@ class _PestScreenState extends State<PestScreen> {
                           });
                         },
                         decoration: InputDecoration(
-                          hintText: 'Cari hama atau penyakit...',
+                          hintText: 'common.search'.tr(),
                           prefixIcon: const Icon(Icons.search),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(30),
@@ -79,17 +82,20 @@ class _PestScreenState extends State<PestScreen> {
                     builder: (context, state) {
                       final selectedCategory = state is PestLoaded
                           ? state.selectedCategory
-                          : 'Semua';
+                          : 'pests.category_all'.tr();
 
                       return SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            _buildChip(context, 'Semua', selectedCategory),
-                            _buildChip(context, 'Hama Padi', selectedCategory),
-                            _buildChip(
-                                context, 'Hama Jagung', selectedCategory),
-                            _buildChip(context, 'Hama Umum', selectedCategory),
+                            _buildChip(context, 'pests.category_all'.tr(),
+                                'Semua', selectedCategory),
+                            _buildChip(context, 'pests.category_padi'.tr(),
+                                'Hama Padi', selectedCategory),
+                            _buildChip(context, 'pests.category_jagung'.tr(),
+                                'Hama Jagung', selectedCategory),
+                            _buildChip(context, 'pests.category_umum'.tr(),
+                                'Hama Umum', selectedCategory),
                           ],
                         ),
                       );
@@ -130,8 +136,8 @@ class _PestScreenState extends State<PestScreen> {
       return Center(
         child: Text(
           state.searchQuery.isNotEmpty || state.selectedCategory != 'Semua'
-              ? 'Tidak ada hama ditemukan'
-              : 'Data tidak ditemukan',
+              ? 'pests.empty_search'.tr()
+              : 'common.no_data'.tr(),
         ),
       );
     }
@@ -147,7 +153,7 @@ class _PestScreenState extends State<PestScreen> {
           final pest = pests[index];
           return _buildPestCard(
             context,
-            pest['nama'] ?? 'Tanpa Nama',
+            pest['nama'] ?? 'common.untitled'.tr(),
             pest['kategori'] ?? 'Umum',
             pest['gambar_url'] ?? '',
             pest,
@@ -166,13 +172,13 @@ class _PestScreenState extends State<PestScreen> {
           children: [
             Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
             const SizedBox(height: 16),
-            const Text(
-              'Gagal memuat data hama',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'pests.load_error'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Pastikan koneksi internet Anda aktif dan coba lagi.',
+              'pests.check_internet'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[600]),
             ),
@@ -182,7 +188,7 @@ class _PestScreenState extends State<PestScreen> {
                 context.read<PestBloc>().add(LoadPests());
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Coba Lagi'),
+              label: Text('common.retry'.tr()),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
@@ -196,9 +202,9 @@ class _PestScreenState extends State<PestScreen> {
     );
   }
 
-  Widget _buildChip(
-      BuildContext context, String label, String selectedCategory) {
-    final isSelected = selectedCategory == label;
+  Widget _buildChip(BuildContext context, String label, String value,
+      String selectedCategory) {
+    final isSelected = selectedCategory == value;
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: ChoiceChip(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:petani_maju/core/constants/colors.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AboutAppScreen extends StatelessWidget {
   const AboutAppScreen({super.key});
@@ -8,9 +9,9 @@ class AboutAppScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Tentang Aplikasi',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          'settings.about'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -52,33 +53,35 @@ class AboutAppScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Versi 1.0.0',
-              style: TextStyle(
+            Text(
+              'about.version'.tr(),
+              style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
               ),
             ),
             const SizedBox(height: 32),
-            const Text(
-              'Petani Maju adalah aplikasi asisten pertanian cerdas yang dirancang untuk membantu petani Indonesia meningkatkan produktivitas hasil panen. Aplikasi ini menyediakan fitur cuaca, kalender tanam, deteksi hama, dan tips pertanian yang relevan.',
+            Text(
+              'about.description'.tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 color: Colors.black87,
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 48),
-            _buildInfoTile('Pengembang', 'Capstone Project Kelompok 4'),
+            _buildInfoTile(
+                'about.developer'.tr(), 'Capstone Project Kelompok 4'),
             _buildDivider(),
-            _buildInfoTile('Kontak', '111202415784@mhs.dinus.ac.id'),
+            _buildInfoTile(
+                'about.contact'.tr(), '111202415784@mhs.dinus.ac.id'),
             _buildDivider(),
-            _buildInfoTile('Tahun Pembuatan', '2025'),
+            _buildInfoTile('about.year'.tr(), '2025'),
             const SizedBox(height: 48),
-            const Text(
-              '© 2025 Petani Maju. All Rights Reserved.',
-              style: TextStyle(
+            Text(
+              'about.copyright'.tr(),
+              style: const TextStyle(
                 fontSize: 12,
                 color: Colors.grey,
               ),

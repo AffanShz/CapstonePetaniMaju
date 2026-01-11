@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class PestDetailScreen extends StatelessWidget {
   // Terima data pest dari halaman sebelumnya
@@ -13,21 +14,21 @@ class PestDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Ambil data dengan fallback value jika null
     // Schema Supabase: id, created_at, nama, kategori, gambar_url, deskripsi, ciri_ciri, dampak, cara_mengatasi
-    final String title = pest['nama'] ?? 'Detail Hama';
+    final String title = pest['nama'] ?? 'pests.detail_title_default'.tr();
     final String category = pest['kategori'] ?? 'Umum';
     final String imageUrl = pest['gambar_url'] ?? '';
     final String? deskripsi = pest['deskripsi'];
     final String characteristics =
-        pest['ciri_ciri'] ?? 'Belum ada informasi ciri-ciri.';
+        pest['ciri_ciri'] ?? 'pests.no_characteristics'.tr();
     // Data dampak dipisahkan baris baru (\n) di database
-    final String rawDampak = pest['dampak'] ?? 'Belum ada informasi dampak.';
+    final String rawDampak = pest['dampak'] ?? 'pests.no_impact'.tr();
     final List<String> impactList = rawDampak.split('\n');
-    final String solution =
-        pest['cara_mengatasi'] ?? 'Belum ada informasi penanganan.';
+    final String solution = pest['cara_mengatasi'] ?? 'pests.no_solution'.tr();
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title), // Judul Dinamis
+        centerTitle: true,
       ),
       body: Stack(
         children: [
@@ -82,12 +83,14 @@ class PestDetailScreen extends StatelessWidget {
 
                       // Bagian Deskripsi (jika ada)
                       if (deskripsi != null && deskripsi.isNotEmpty) ...[
-                        _buildInfoSection('Deskripsi', deskripsi),
+                        _buildInfoSection(
+                            'pests.description_title'.tr(), deskripsi),
                         const SizedBox(height: 16),
                       ],
 
                       // Bagian Ciri-ciri
-                      _buildInfoSection('Ciri-ciri', characteristics),
+                      _buildInfoSection(
+                          'pests.characteristics_title'.tr(), characteristics),
 
                       const SizedBox(height: 16),
 
@@ -102,9 +105,9 @@ class PestDetailScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Dampak',
-                              style: TextStyle(
+                            Text(
+                              'pests.impact_title'.tr(),
+                              style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),
@@ -149,8 +152,8 @@ class PestDetailScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Cara Mengatasi',
-                    style: TextStyle(
+                child: Text('pests.solution_button'.tr(),
+                    style: const TextStyle(
                         fontSize: 16,
                         color: Colors.white,
                         fontWeight: FontWeight.bold)),
@@ -218,8 +221,9 @@ class PestDetailScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Cara Mengatasi',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text('pests.solution_title'.tr(),
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Text(solution, style: const TextStyle(fontSize: 16, height: 1.5)),
               const SizedBox(height: 24),
@@ -227,7 +231,7 @@ class PestDetailScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Tutup'),
+                  child: Text('common.close'.tr()),
                 ),
               )
             ],

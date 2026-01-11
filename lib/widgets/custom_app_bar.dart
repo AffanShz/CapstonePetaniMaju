@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:petani_maju/core/constants/colors.dart';
 import 'package:petani_maju/core/services/cache_service.dart';
 import 'package:petani_maju/features/notifications/screens/notification_history_screen.dart';
@@ -32,7 +33,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     _profileSubscription = _cacheService.profileUpdateStream.listen((profile) {
       if (mounted) {
         setState(() {
-          _userName = profile['name'] ?? 'Pak Tani';
+          _userName = profile['name'] ?? 'profile.default_name'.tr();
           _userImagePath = profile['imagePath'];
         });
       }
@@ -42,7 +43,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   void _loadProfile() {
     final profile = _cacheService.getUserProfile();
     setState(() {
-      _userName = profile['name'] ?? 'Pak Tani';
+      _userName = profile['name'] ?? 'profile.default_name'.tr();
       _userImagePath = profile['imagePath'];
     });
   }
@@ -54,19 +55,19 @@ class _CustomAppBarState extends State<CustomAppBar> {
   }
 
   String _formatLastSync() {
-    if (widget.lastSyncTime == null) return 'Belum tersinkronisasi';
+    if (widget.lastSyncTime == null) return 'home.sync_not_synced'.tr();
 
     final now = DateTime.now();
     final diff = now.difference(widget.lastSyncTime!);
 
     if (diff.inMinutes < 1) {
-      return 'Baru saja';
+      return 'home.sync_just_now'.tr();
     } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes} menit lalu';
+      return 'home.sync_min_ago'.tr(args: [diff.inMinutes.toString()]);
     } else if (diff.inHours < 24) {
-      return '${diff.inHours} jam lalu';
+      return 'home.sync_hour_ago'.tr(args: [diff.inHours.toString()]);
     } else {
-      return '${diff.inDays} hari lalu';
+      return 'home.sync_day_ago'.tr(args: [diff.inDays.toString()]);
     }
   }
 
@@ -117,7 +118,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Petani Maju',
+                        'app_name'.tr(),
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -168,8 +169,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
               const SizedBox(width: 8),
               Text(
                 widget.isOnline
-                    ? 'Online – Data terakhir: ${_formatLastSync()}'
-                    : 'Mode Offline – Data terakhir: ${_formatLastSync()}',
+                    ? 'home.sync_online'.tr(args: [_formatLastSync()])
+                    : 'home.sync_offline'.tr(args: [_formatLastSync()]),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,

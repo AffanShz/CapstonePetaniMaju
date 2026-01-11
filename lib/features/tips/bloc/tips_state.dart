@@ -17,11 +17,34 @@ class TipsLoading extends TipsState {}
 /// State saat data berhasil dimuat
 class TipsLoaded extends TipsState {
   final List<Map<String, dynamic>> tips;
+  final List<Map<String, dynamic>> filteredTips;
+  final String searchQuery;
+  final String selectedCategory;
 
-  const TipsLoaded({required this.tips});
+  const TipsLoaded({
+    required this.tips,
+    this.filteredTips = const [],
+    this.searchQuery = '',
+    this.selectedCategory = 'Semua',
+  });
 
   @override
-  List<Object?> get props => [tips];
+  List<Object?> get props =>
+      [tips, filteredTips, searchQuery, selectedCategory];
+
+  TipsLoaded copyWith({
+    List<Map<String, dynamic>>? tips,
+    List<Map<String, dynamic>>? filteredTips,
+    String? searchQuery,
+    String? selectedCategory,
+  }) {
+    return TipsLoaded(
+      tips: tips ?? this.tips,
+      filteredTips: filteredTips ?? this.filteredTips,
+      searchQuery: searchQuery ?? this.searchQuery,
+      selectedCategory: selectedCategory ?? this.selectedCategory,
+    );
+  }
 }
 
 /// State saat terjadi error

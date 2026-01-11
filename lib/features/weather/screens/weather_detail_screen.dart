@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:petani_maju/data/repositories/weather_repository.dart';
 import 'package:petani_maju/core/services/cache_service.dart';
@@ -136,7 +137,7 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
       debugPrint("Weather fetch error: $e");
       if (currentWeather == null && mounted) {
         setState(() {
-          errorMessage = "Gagal memuat data cuaca. Periksa koneksi internet.";
+          errorMessage = "weather.load_error".tr();
           isLoading = false;
         });
       } else if (mounted) {
@@ -220,7 +221,7 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail Cuaca'),
+        title: Text('weather.detail_title'.tr()),
         centerTitle: true,
         actions: [
           IconButton(
@@ -246,7 +247,7 @@ class _WeatherDetailScreenState extends State<WeatherDetailScreen> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadData,
-                        child: const Text('Coba Lagi'),
+                        child: Text('common.retry'.tr()),
                       ),
                     ],
                   ),

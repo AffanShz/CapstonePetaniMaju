@@ -10,6 +10,8 @@ import 'package:petani_maju/widgets/main_weather_card.dart';
 import 'package:petani_maju/widgets/section_header.dart';
 import 'package:petani_maju/features/weather/screens/weather_detail_screen.dart';
 import 'package:petani_maju/core/services/notification_service.dart';
+import 'package:petani_maju/features/home/widgets/home_skeleton.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(int)? onTabChange;
@@ -86,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // State: Initial atau Loading (tanpa data sebelumnya)
             if (state is HomeInitial ||
                 (state is HomeLoading && !state.isRefreshing)) {
-              return const Center(child: CircularProgressIndicator());
+              return const HomeSkeleton();
             }
 
             // State: Error (tanpa data fallback)
@@ -122,11 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
             // State: Loading saat refresh (sudah ada data sebelumnya)
             if (state is HomeLoading && state.isRefreshing) {
               // Ambil state sebelumnya jika ada
-              return const Center(child: CircularProgressIndicator());
+              return const HomeSkeleton();
             }
 
             // Fallback
-            return const Center(child: CircularProgressIndicator());
+            return const HomeSkeleton();
           },
         ),
       ),
@@ -177,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
 
               SectionHeader(
-                title: 'Prediksi Cuaca (Per 6 Jam)',
+                title: 'home.weather_label'.tr(),
                 onActionTap: () {
                   Navigator.push(
                     context,
@@ -193,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
 
               SectionHeader(
-                title: 'Tips Pertanian',
+                title: 'home.menu_tips'.tr(),
                 onActionTap: () {
                   if (widget.onTabChange != null) {
                     widget.onTabChange!(2); // Switch to Tips tab (index 2)

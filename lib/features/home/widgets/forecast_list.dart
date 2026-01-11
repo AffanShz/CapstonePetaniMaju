@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:petani_maju/utils/weather_utils.dart';
 
 class ForecastList extends StatelessWidget {
@@ -51,10 +52,10 @@ class ForecastList extends StatelessWidget {
           var item = filteredData[index];
           DateTime date = DateTime.parse(item['dt_txt']);
 
-          String dayName =
-              DateFormat('EEEE', 'id_ID').format(date); // Full day name
-          String dateText =
-              DateFormat('d MMM', 'id_ID').format(date); // e.g., "14 Des"
+          String dayName = DateFormat('EEEE', context.locale.toString())
+              .format(date); // Full day name
+          String dateText = DateFormat('d MMM', context.locale.toString())
+              .format(date); // e.g., "14 Des"
           String timeText = DateFormat('HH:mm').format(date);
           String temp = item['main']['temp'].toStringAsFixed(0);
           String iconCode = item['weather'][0]['icon'];

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class TipsDetailScreen extends StatelessWidget {
   final Map<String, dynamic> tipData;
@@ -8,14 +9,16 @@ class TipsDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String title = tipData['title'] ?? 'Tanpa Judul';
+    final String title = tipData['title'] ?? 'common.untitled'.tr();
     final String category = tipData['category'] ?? 'Umum';
     final String imageUrl = tipData['image_url'] ?? '';
-    final String content = tipData['content'] ?? 'Konten tidak tersedia.';
+    final String content =
+        tipData['content'] ?? 'tips.content_unavailable'.tr();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail Tips'),
+        title: Text('tips.detail_title'.tr()),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(

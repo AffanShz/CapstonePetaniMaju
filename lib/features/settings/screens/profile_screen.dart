@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:petani_maju/core/constants/colors.dart';
 import 'package:petani_maju/core/services/cache_service.dart';
 
@@ -28,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadProfile() async {
     final profile = _cacheService.getUserProfile();
     setState(() {
-      _nameController.text = profile['name'] ?? 'Pak Tani';
+      _nameController.text = profile['name'] ?? 'profile.default_name'.tr();
       _imagePath = profile['imagePath'];
     });
   }
@@ -47,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengambil gambar: $e')),
+        SnackBar(content: Text('${'profile.image_error'.tr()}$e')),
       );
     }
   }
@@ -65,8 +66,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil berhasil disimpan!'),
+          SnackBar(
+            content: Text('profile.save_success'.tr()),
             backgroundColor: Colors.green,
           ),
         );
@@ -76,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menyimpan profil: $e'),
+            content: Text('${'profile.save_error'.tr()}$e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -101,13 +102,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Edit Profil',
-          style: TextStyle(
+        title: Text(
+          'profile.edit_title'.tr(),
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -165,8 +167,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: 'Nama Lengkap',
-                hintText: 'Masukkan nama Anda',
+                labelText: 'profile.name_label'.tr(),
+                hintText: 'profile.name_hint'.tr(),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -195,9 +197,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text(
-                        'Simpan Perubahan',
-                        style: TextStyle(
+                    : Text(
+                        'profile.save_button'.tr(),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
