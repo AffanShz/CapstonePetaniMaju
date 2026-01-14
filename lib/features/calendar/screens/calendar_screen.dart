@@ -801,59 +801,67 @@ class _CalendarScreenState extends State<CalendarScreen> {
     DateTime dateTime,
     TimeOfDay time,
   ) async {
-    final notif = NotificationService();
-    final timeFormatted =
-        '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+    try {
+      final notif = NotificationService();
+      // Ensure notification service is initialized (critical for release builds)
+      await notif.init();
 
-    debugPrint(
-        '📅 Scheduling notifications for: $plantName at $dateTime (ID: $scheduleId)');
+      final timeFormatted =
+          '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
 
-    // 1. Notifikasi tepat waktu
-    final atTimeDate = dateTime;
-    debugPrint('   ⏰ At time: $atTimeDate');
-    if (atTimeDate.isAfter(DateTime.now())) {
-      await notif.scheduleNotification(
-        id: scheduleId * 10 + 0,
-        title: '🌱 Waktunya: $plantName',
-        body: 'Sekarang saatnya kegiatan $plantName.',
-        scheduledDate: atTimeDate,
-      );
-      debugPrint('   ✅ At-time notification scheduled');
-    } else {
-      debugPrint('   ⚠️ At-time skipped (already passed)');
+      debugPrint(
+          '📅 Scheduling notifications for: $plantName at $dateTime (ID: $scheduleId)');
+
+      // 1. Notifikasi tepat waktu
+      final atTimeDate = dateTime;
+      debugPrint('   ⏰ At time: $atTimeDate');
+      if (atTimeDate.isAfter(DateTime.now())) {
+        await notif.scheduleNotification(
+          id: scheduleId * 10 + 0,
+          title: '🌱 Waktunya: $plantName',
+          body: 'Sekarang saatnya kegiatan $plantName.',
+          scheduledDate: atTimeDate,
+        );
+        debugPrint('   ✅ At-time notification scheduled');
+      } else {
+        debugPrint('   ⚠️ At-time skipped (already passed)');
+      }
+
+      // 2. Notifikasi 1 hari (24 jam) sebelum
+      final oneDayBefore = dateTime.subtract(const Duration(days: 1));
+      debugPrint('   📆 1 day before: $oneDayBefore');
+      if (oneDayBefore.isAfter(DateTime.now())) {
+        await notif.scheduleNotification(
+          id: scheduleId * 10 + 1,
+          title: '📅 Pengingat Besok',
+          body: 'Besok jam $timeFormatted ada kegiatan: $plantName',
+          scheduledDate: oneDayBefore,
+        );
+        debugPrint('   ✅ 1-day-before notification scheduled');
+      } else {
+        debugPrint('   ⚠️ 1-day-before skipped (already passed)');
+      }
+
+      // 3. Notifikasi 1 jam sebelum
+      final oneHourBefore = dateTime.subtract(const Duration(hours: 1));
+      debugPrint('   ⏱️ 1 hour before: $oneHourBefore');
+      if (oneHourBefore.isAfter(DateTime.now())) {
+        await notif.scheduleNotification(
+          id: scheduleId * 10 + 2,
+          title: '⏰ 1 Jam Lagi!',
+          body: 'Jam $timeFormatted ada kegiatan: $plantName',
+          scheduledDate: oneHourBefore,
+        );
+        debugPrint('   ✅ 1-hour-before notification scheduled');
+      } else {
+        debugPrint('   ⚠️ 1-hour-before skipped (already passed)');
+      }
+
+      debugPrint('📅 Notification scheduling complete for: $plantName');
+    } catch (e) {
+      debugPrint('❌ Error scheduling notifications: $e');
+      // Don't rethrow - we don't want notification failures to crash the app
     }
-
-    // 2. Notifikasi 1 hari (24 jam) sebelum
-    final oneDayBefore = dateTime.subtract(const Duration(days: 1));
-    debugPrint('   📆 1 day before: $oneDayBefore');
-    if (oneDayBefore.isAfter(DateTime.now())) {
-      await notif.scheduleNotification(
-        id: scheduleId * 10 + 1,
-        title: '📅 Pengingat Besok',
-        body: 'Besok jam $timeFormatted ada kegiatan: $plantName',
-        scheduledDate: oneDayBefore,
-      );
-      debugPrint('   ✅ 1-day-before notification scheduled');
-    } else {
-      debugPrint('   ⚠️ 1-day-before skipped (already passed)');
-    }
-
-    // 3. Notifikasi 1 jam sebelum
-    final oneHourBefore = dateTime.subtract(const Duration(hours: 1));
-    debugPrint('   ⏱️ 1 hour before: $oneHourBefore');
-    if (oneHourBefore.isAfter(DateTime.now())) {
-      await notif.scheduleNotification(
-        id: scheduleId * 10 + 2,
-        title: '⏰ 1 Jam Lagi!',
-        body: 'Jam $timeFormatted ada kegiatan: $plantName',
-        scheduledDate: oneHourBefore,
-      );
-      debugPrint('   ✅ 1-hour-before notification scheduled');
-    } else {
-      debugPrint('   ⚠️ 1-hour-before skipped (already passed)');
-    }
-
-    debugPrint('📅 Notification scheduling complete for: $plantName');
   }
 
   Widget _buildModernInput({

@@ -27,7 +27,7 @@ class NotificationService {
       if (kDebugMode) print("Timezone set: $timeZoneName");
 
       const AndroidInitializationSettings androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('@mipmap/launcher_icon');
 
       const DarwinInitializationSettings iosSettings =
           DarwinInitializationSettings(
@@ -158,6 +158,14 @@ class NotificationService {
     required DateTime scheduledDate,
   }) async {
     try {
+      // Ensure notification service is initialized before scheduling
+      if (!_isInitialized) {
+        await init();
+        if (!_isInitialized) {
+          throw Exception('NotificationService failed to initialize');
+        }
+      }
+
       if (kDebugMode) {
         print('🔔 scheduleNotification called:');
         print('   ID: $id');
@@ -207,7 +215,7 @@ class NotificationService {
             channelDescription: 'Pengingat aktivitas pertanian penting',
             importance: Importance.max,
             priority: Priority.high,
-            icon: '@mipmap/ic_launcher',
+            icon: '@mipmap/launcher_icon',
             playSound: true,
             enableVibration: true,
           ),
