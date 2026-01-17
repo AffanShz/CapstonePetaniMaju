@@ -43,7 +43,17 @@ Aplikasi mobile pintar untuk membantu petani Indonesia dengan informasi cuaca re
 - **Bantuan Pengguna**: Layanan support via email terintegrasi.
 - **Transparansi**: Informasi lengkap tentang aplikasi dan versi.
 
-## 🛠️ Tech Stack & Architecture
+### � Security (OWASP MASVS Compliant)
+- **Encrypted Storage**: Data lokal terenkripsi dengan AES-256.
+- **Secure Key Management**: Kunci enkripsi tersimpan di Android Keystore/iOS Keychain.
+- **Code Protection**: ProGuard obfuscation & R8 minification.
+- **No Data Backup**: Mencegah ekstraksi data via backup.
+
+### 🌍 Multi-Language Support
+- **Bahasa Indonesia & English**: Switch bahasa melalui Settings.
+- **Localized Content**: UI, notifikasi, dan konten tersedia dalam 2 bahasa.
+
+## �🛠️ Tech Stack & Architecture
 
 Aplikasi ini dibangun dengan **Clean Architecture** dan **BLoC Pattern** untuk skalabilitas maksimal.
 
@@ -54,15 +64,19 @@ Aplikasi ini dibangun dengan **Clean Architecture** dan **BLoC Pattern** untuk s
 | **Architecture** | Feature-First (Data, Domain, Presentation) |
 | **Backend** | Supabase (PostgreSQL, Auth, Storage) |
 | **Weather API** | OpenWeatherMap |
-| **Local Storage** | Hive (NoSQL Database) |
+| **Local Storage** | Hive (NoSQL Database) with AES-256 Encryption |
+| **Secure Storage** | Flutter Secure Storage (Keystore/Keychain) |
 | **Background Service** | Workmanager & Android Alarm Manager |
 | **Notifications** | Flutter Local Notifications |
+| **Localization** | Easy Localization (ID/EN) |
+| **Security** | ProGuard, R8 Minification, OWASP MASVS Compliant |
 
 ## 📋 Riwayat Versi
 
 | Versi | Tanggal | Deskripsi |
 |-------|---------|-----------|
-| 0.4.0 | 2026-01-11 | Profile, Support, & Security Improvements |
+| 0.5.0 | 2026-01-11 | Localization (ID/EN) & Skeleton Loading UI |
+| 0.4.0 | 2026-01-11 | Profile, Support, & Security (OWASP MASVS) |
 | 0.3.0 | 2025-12-31 | BLoC Refactor & Smart Notifications |
 | 0.2.0 | 2025-12-21 | Offline Mode & Stability |
 | 0.1.0 | 2025-12-17 | Initial Release (Weather & Calendar Core) |
@@ -71,16 +85,21 @@ Aplikasi ini dibangun dengan **Clean Architecture** dan **BLoC Pattern** untuk s
 
 ```yaml
 dependencies:
-  flutter_bloc: ^8.1.3
-  equatable: ^2.0.5
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.7
   supabase_flutter: ^2.0.0
   hive: ^2.2.3
-  workmanager: ^0.5.2
-  flutter_local_notifications: ^18.0.1
+  hive_flutter: ^1.1.0
+  flutter_secure_storage: ^10.0.0    # Secure key storage
+  workmanager: ^0.9.0+3
+  flutter_local_notifications: ^17.0.0
   geolocator: ^14.0.2
   http: ^1.6.0
   intl: ^0.20.2
   table_calendar: ^3.1.2
+  easy_localization: ^3.0.8          # Multi-language
+  shimmer: ^3.0.0                    # Skeleton loading
+  cached_network_image: ^3.4.1       # Image caching
 ```
 
 ## 📂 Struktur Project (Feature-First)
@@ -96,12 +115,16 @@ lib/
 │   ├── repositories/       # Data mediation logic
 │   └── models/             # Data classes
 ├── features/               # Feature Modules
-│   ├── home/               # HomeLogic, BLoC, UI
+│   ├── home/               # HomeLogic, BLoC, UI, Skeleton
 │   ├── calendar/           # CalendarLogic, BLoC, UI
 │   ├── tips/               # TipsLogic, BLoC, UI
-│   ├── weather/            # WeatherUI
-│   └── settings/           # SettingsUI & Logic
+│   ├── pests/              # Hama & Penyakit Tanaman
+│   ├── weather/            # WeatherUI & Detail
+│   ├── settings/           # Profile, Notifikasi, Bahasa
+│   ├── onboarding/         # First-time User Guide
+│   └── notifications/      # Notification History
 ├── widgets/                # Reusable global widgets
+├── utils/                  # Helper utilities
 └── main.dart               # Entry point & DI Setup
 ```
 
